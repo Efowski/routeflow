@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# Environment variables
+.env
+.env.*
+
+# React / Node
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Archives
+*.zip
