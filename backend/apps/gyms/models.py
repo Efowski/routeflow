@@ -1,6 +1,14 @@
 import uuid
 from django.db import models
 
+
+class Gym(models.Model):
+    name = models.CharField(max_length=150)
+    created_at = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 class SectorType(models.TextChoices):
     BOULDERING = 'bouldering', 'Bouldering'
     ROPE_WALL = 'rope_wall', 'Ściana Linowa'
