@@ -9,7 +9,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'role', 'gym_name', 'password']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'role', 'gym', 'gym_name', 'password']
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -18,6 +18,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             role=validated_data.get('role', 'gym_manager'),
+            gym=validated_data.get('gym'),
             gym_name=validated_data.get('gym_name', 'VertiGym'),
             password=validated_data['password']
         )
@@ -31,6 +32,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'email': self.user.email,
             'name': self.user.get_full_name(),
             'role': self.user.role,
+            'gym': str(self.user.gym.id) if self.user.gym else None,
             'gym_name': self.user.gym_name,
         }
         return data
