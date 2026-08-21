@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from apps.gyms.models import Gym
 
 class UserRole(models.TextChoices):
     GYM_MANAGER = 'gym_manager', 'Manager Obiektu'
@@ -11,6 +12,7 @@ class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, verbose_name="Adres E-mail")
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.GYM_MANAGER)
+    gym = models.ForeignKey(Gym, null=True, blank=True, related_name='users', on_delete=models.SET_NULL)
     gym_name = models.CharField(max_length=150, default="VertiGym Warszawska", verbose_name="Nazwa Ściany")
     phone = models.CharField(max_length=30, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
