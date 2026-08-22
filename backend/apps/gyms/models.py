@@ -17,6 +17,7 @@ class SectorType(models.TextChoices):
 class Sector(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=120, verbose_name="Nazwa sektora")
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, null=True, blank=True, related_name='sectors')
     sector_type = models.CharField(
         max_length=20,
         choices=SectorType.choices,
