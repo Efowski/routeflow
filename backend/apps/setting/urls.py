@@ -8,7 +8,7 @@ from .views import (
 
 router = DefaultRouter()
 router.register(r'setters', SetterProfileViewSet, basename='setter')
-router.register(r'sessions', SettingSessionViewSet, basename='session')
+router.register(r'sessions', SettingSessionViewSet, basename='settingsession')
 router.register(r'tasks', SetterTaskViewSet, basename='task')
 router.register(r'logs', ResetHistoryLogViewSet, basename='log')
 

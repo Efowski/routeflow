@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from .models import SetterProfile, SettingSession, SetterTask, ResetHistoryLog
 
@@ -18,6 +19,28 @@ class SetterTaskSerializer(serializers.ModelSerializer):
         model = SetterTask
         fields = '__all__'
 
+    def validate(self, attrs):
+            session = attrs.get(
+                'session',
+                getattr(self.instance, 'session', None)
+            )
+            setter = attrs.get(
+                'setter',
+                getattr(self.instance, 'setter', None)
+            )
+    
+            if session and setter:
+                if setter.user.gym != session.sector.gym:
+                    raise serializers.ValidationError({
+                        'setter': (
+                            'Setter must belong to the same gym '
+                            'as the setting session.'
+                        )
+                    })
+    
+            return attrs
+        
+
 class SettingSessionSerializer(serializers.ModelSerializer):
     tasks = SetterTaskSerializer(many=True, read_only=True)
     sector_name = serializers.CharField(source='sector.name', read_only=True)
@@ -27,7 +50,24 @@ class SettingSessionSerializer(serializers.ModelSerializer):
         model = SettingSession
         fields = '__all__'
 
+    def validate(self, attrs):
+        sector = attrs.get('sector', getattr(self.instance, 'sector', None))
+        lead_setter = attrs.get('lead_setter', getattr(self.instance), 'lead_setter', None)
+
+        if sector and lead_setter:
+            if lead_setter.user.gym != sector.gym:
+                raise ValidationError({
+                    'lead_setter': (
+                        'Lead setter must belong to the same gym '
+                        'as the setting session.'
+                    )
+                })
+        return attrs
+
+
 class ResetHistoryLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResetHistoryLog
         fields = '__all__'
+
+    

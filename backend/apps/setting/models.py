@@ -2,6 +2,9 @@ import uuid
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+from django.core.exceptions import ValidationError
+
+
 from django.contrib.auth.models import User
 from apps.gyms.models import Sector
 
@@ -37,17 +40,29 @@ class SettingSession(models.Model):
     )
     notes = models.TextField(blank=True, verbose_name="Wskazówki i koncepcja")
 
+
+    def clean(self):
+        super().clean()
+        if self.lead_setter and self.sector:
+            if self.lead_setter.user.gym != self.sector.gym:
+                raise ValidationError({
+                    'lead_setter': ('Lead setter must belong to the same gym '
+                        'as the setting session.')
+                })
+
+ 
     def __str__(self):
         return f"{self.title} - {self.sector.name} ({self.scheduled_date})"
+
+    
 
 class SetterTask(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     session = models.ForeignKey(
         SettingSession,
         on_delete=models.CASCADE,
-        related_name='tasks',
-        null=True,
-        blank=True
+        related_name='tasks' 
+        
     )
     setter = models.ForeignKey(SetterProfile, on_delete=models.CASCADE, related_name='assigned_tasks')
     title = models.CharField(max_length=120, verbose_name="Zadanie / Prototyp")
@@ -68,12 +83,26 @@ class SetterTask(models.Model):
     due_date = models.DateField(null=True, blank=True, verbose_name="Termin wykonania")
     created_at = models.DateField(default=timezone.now, verbose_name="Data utworzenia")
 
+
+    def clean(self):
+        super().clean()
+
+        if self.session_id and self.setter_id:
+            if self.setter.user.gym != self.session.sector.gym:
+                raise ValidationError({
+                    'setter': (
+                    'Setter must belong to the same gym '
+                    'as the setting session.'
+                )
+                })
+
     def __str__(self):
         return f"{self.title} ({self.target_grade}) - {self.setter.user.username}"
 
 class ResetHistoryLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     date = models.DateField(default=timezone.now, verbose_name="Data resetu")
+    session = models.ForeignKey(SettingSession, on_delete=models.PROTECT, related_name='reset_history_logs')
     sector_name = models.CharField(max_length=120, verbose_name="Sektor")
     lead_setter_name = models.CharField(max_length=120, verbose_name="Szef resetu")
     routes_stripped = models.PositiveIntegerField(verbose_name="Odkręcone drogi")
