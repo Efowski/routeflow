@@ -41,3 +41,13 @@ class RouteSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'ascents'):
             return obj.ascents.count()
         return 0
+
+    def validate_sector(self, sector):
+        request = self.context.get('request')
+
+        if request and sector.gym != request.user.gym:
+            raise serializers.ValidationError(
+            'Sector must belong to your gym.'
+        )
+
+        return sector
