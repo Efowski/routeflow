@@ -5,12 +5,16 @@ from .models import Route
 from .serializers import RouteSerializer
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all().select_related('sector')
+    
     serializer_class = RouteSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['sector', 'route_type', 'status', 'grade', 'hold_color']
     search_fields = ['name', 'setter_name', 'description']
     ordering_fields = ['date_set', 'grade', 'name']
+    def get_queryset(self):
+        return Route.objects.filter(
+        sector__gym=self.request.user.gym
+    ).select_related('sector')
 
     @action(detail=True, methods=['post'])
     def retire(self, request, pk=None):

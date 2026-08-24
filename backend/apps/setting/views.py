@@ -8,9 +8,12 @@ from .serializers import (
 )
 
 class SetterProfileViewSet(viewsets.ModelViewSet):
-    queryset = SetterProfile.objects.all().select_related('user')
+    
     serializer_class = SetterProfileSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SetterProfile.objects.filter(user__gym=self.request.user.gym).select_related('user')
 
 class SettingSessionViewSet(viewsets.ModelViewSet):
     
@@ -26,24 +29,24 @@ class SettingSessionViewSet(viewsets.ModelViewSet):
 class SetterTaskViewSet(viewsets.ModelViewSet):
      
     serializer_class = SetterTaskSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     filterset_fields = ['status', 'setter', 'session']
 
     def get_queryset(self):
         user = self.request.user
 
-        return SetterTask.objects.filter(session__sector__gym=user.gym).select_related('setter__user', 'session'
+        return SetterTask.objects.filter(session__sector__gym=user.gym).select_related('setter__user', 'session__sector')
 
 
-                                                                                       )
+                                                                                       
 class ResetHistoryLogViewSet(viewsets.ModelViewSet):
      
     serializer_class = ResetHistoryLogSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     ordering_fields = ['date']
 
     def get_queryset(self):
         user = self.request.user
 
-        return ResetHistoryLog.objects.filter(session__sector__gym=user.gym) 
+        return ResetHistoryLog.objects.filter(session__sector__gym=user.gym).select_related('session__sector') 
 
