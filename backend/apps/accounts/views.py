@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-from .serializers import UserRegisterSerializer, CustomTokenObtainPairSerializer
+from .serializers import UserRegisterSerializer, CustomTokenObtainPairSerializer, CurrentUserSerializer
 
 User = get_user_model()
 
@@ -14,6 +14,7 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = CurrentUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):

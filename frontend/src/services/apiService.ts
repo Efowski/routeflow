@@ -2,6 +2,9 @@ import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog 
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
+
+export type ApiErrorData = Record<string, string[] | string>;
+
 // Helper for HTTP requests
 async function request<T>(
   endpoint: string,
@@ -22,8 +25,17 @@ async function request<T>(
     });
 
     if (!response.ok) {
-      console.warn(`API Error [${response.status}] for ${endpoint}`);
-      return null;
+      const errorData = await response.json().catch(() => null);
+
+      console.warn(
+        `API Error [${response.status}] for ${endpoint}`,
+        errorData
+      );
+
+      throw {
+        status: response.status,
+        data: errorData,
+      };
     }
 
     if (response.status === 204) {
@@ -32,11 +44,7 @@ async function request<T>(
 
     return (await response.json()) as T;
   } catch (error) {
-    console.log(
-      `Backend REST API offline or unreachable at ${API_BASE_URL}${endpoint}:`,
-      error
-    );
-    return null;
+    throw error;
   }
 }
 
@@ -68,6 +76,10 @@ export async function apiLogin(email: string, password: string) {
     console.log('Login API unavailable:', error);
     return null;
   }
+}
+
+export async function apiFetchProfile() {
+  return await request<any>('/accounts/profile/');
 }
 
 export function apiLogout() {
@@ -325,6 +337,8 @@ export async function apiCreateSession(
   };
 }
 
+
+
 // --- SETTER TASKS API ---
 export async function apiFetchTasks(): Promise<SetterTask[]> {
   const data = await request<any[]>('/setting/tasks/');
@@ -350,6 +364,8 @@ export async function apiFetchTasks(): Promise<SetterTask[]> {
 export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTask | null> {
   const payload = {
     title: task.title,
+    session: task.sessionId,
+    setter: task.setterId,
     target_grade: task.targetGrade || '6A',
     hold_color: task.holdColor || 'red',
     sector_name: task.sectorName || 'Sektor Główny',
@@ -367,8 +383,8 @@ export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTa
 
   return {
     id: String(created.id),
-    sessionId: task.sessionId || '',
-    setterId: task.setterId || '',
+    sessionId: String(created.session || ''),
+    setterId: String(created.setter || ''),
     setterName: created.setter_name || task.setterName || 'Setter',
     title: created.title,
     description: created.description,
@@ -431,4 +447,16 @@ export async function apiCreateResetLog(log: Partial<ResetHistoryLog>): Promise<
     routesSet: created.routes_set,
     notes: created.notes,
   };
+}
+
+export async function apiUpdateSessionStatus(
+  id: string,
+  status: string
+): Promise<boolean> {
+  const res = await request<any>(`/setting/sessions/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+
+  return res !== null;
 }
