@@ -8,3 +8,31 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('role', 'is_staff', 'is_active')
     search_fields = ('email', 'first_name', 'last_name', 'gym_name')
     ordering = ('email',)
+
+
+    fieldsets = UserAdmin.fieldsets + (
+        (
+            'RouteFlow',
+            {
+                'fields': (
+                    'role',
+                    'gym',
+                    'gym_name',
+                )
+            },
+        ),
+    )
+
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (
+            'RouteFlow',
+            {
+                'fields': (
+                    'email',
+                    'role',
+                    'gym',
+                    'gym_name',
+                )
+            },
+        ),
+    )
