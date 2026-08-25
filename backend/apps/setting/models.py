@@ -81,7 +81,7 @@ class SetterTask(models.Model):
     )
     description = models.TextField(blank=True)
     due_date = models.DateField(null=True, blank=True, verbose_name="Termin wykonania")
-    created_at = models.DateField(default=timezone.now, verbose_name="Data utworzenia")
+    created_at = models.DateField(auto_now_add=True, verbose_name="Data utworzenia")
 
 
     def clean(self):

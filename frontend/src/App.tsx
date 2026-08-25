@@ -12,6 +12,7 @@ import {
 } from './data/mockData';
 import {
   apiLogout, 
+  apiFetchProfile,
   apiFetchRoutes,
   apiCreateRoute,
   apiUpdateRouteStatus,
@@ -21,6 +22,7 @@ import {
   apiCreateSetter,
   apiFetchSessions,
   apiCreateSession,
+  apiUpdateSessionStatus,
   apiFetchTasks,
   apiCreateTask,
   apiUpdateTaskStatus,
@@ -59,6 +61,10 @@ export default function App() {
 
   const [selectedRouteForQR, setSelectedRouteForQR] = useState<RouteItem | null>(null);
 
+
+
+
+
   // Fetch initial data from Django REST API backend
   const loadDataFromBackend = async () => {
     const backendRoutes = await apiFetchRoutes();
@@ -77,8 +83,54 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadDataFromBackend();
-  }, []);
+  const restoreSession = async () => {
+    const token = localStorage.getItem('access_token');
+
+    
+
+    if (!token) {
+      setShowAuthLanding(true);
+      return;
+    }
+
+    const data = await apiFetchProfile();
+     
+
+    if (!data) {
+      apiLogout();
+      setCurrentUser(null);
+      setShowAuthLanding(true);
+      return;
+    }
+
+    const restoredUser: UserAccount = {
+      id: String(data.id),
+      email: data.email,
+      name: data.name || data.email,
+      role:
+        data.role === 'gym_manager'
+          ? 'Gym Manager'
+          : data.role === 'head_setter'
+          ? 'Head Setter'
+          : 'Route Setter',
+      gymName: data.gym_name || '',
+      avatarUrl: '',
+      isNewRegistration: false,
+    };
+
+    setCurrentUser(restoredUser);
+    setShowAuthLanding(false);
+
+    await loadDataFromBackend();
+  };
+
+  restoreSession();
+}, []);
+
+
+
+
+ 
 
   // Derived Metrics
   const activeRoutes = routes.filter((r) => r.status === 'active');
@@ -141,28 +193,88 @@ export default function App() {
     setLogs([newLog, ...logs]);
   };
 
-  const handleAddSession = async (newSessionData: Omit<SettingSession, 'id'>) => {
+  const handleAddSession = async (
+  newSessionData: Omit<SettingSession, 'id'>
+) => {
+  try {
     const created = await apiCreateSession(newSessionData);
-    const newSession: SettingSession = created || {
-      ...newSessionData,
-      id: `sess-${Date.now()}`,
-    };
-    setSessions([newSession, ...sessions]);
-  };
 
-  const handleUpdateSessionStatus = (sessionId: string, status: 'planned' | 'in_progress' | 'completed') => {
-    setSessions(sessions.map((s) => (s.id === sessionId ? { ...s, status } : s)));
-  };
+    if (!created) {
+      throw new Error('Nie udało się utworzyć sesji.');
+    }
 
-  const handleAddTask = async (newTaskData: Omit<SetterTask, 'id' | 'createdAt'>) => {
+    setSessions((prev) => [created, ...prev]);
+  } catch (error: any) {
+    console.error('Create session error:', error);
+
+    const errorData = error?.data;
+
+    if (errorData) {
+      const messages = Object.entries(errorData)
+        .flatMap(([field, messages]) => {
+          const text = Array.isArray(messages)
+            ? messages.join(', ')
+            : String(messages);
+
+          return `${field}: ${text}`;
+        })
+        .join('\n');
+
+      alert(messages);
+    } else {
+      alert('Nie udało się utworzyć sesji.');
+    }
+  }
+};
+
+  const handleUpdateSessionStatus = async (
+  sessionId: string,
+  status: 'planned' | 'in_progress' | 'completed'
+) => {
+  const success = await apiUpdateSessionStatus(sessionId, status);
+
+  if (!success) {
+    return;
+  }
+
+  setSessions(
+    sessions.map((s) =>
+      s.id === sessionId ? { ...s, status } : s
+    )
+  );
+};
+
+  const handleAddTask = async (
+  newTaskData: Omit<SetterTask, 'id' | 'createdAt'>
+) => {
+  try {
     const created = await apiCreateTask(newTaskData);
-    const newTask: SetterTask = created || {
-      ...newTaskData,
-      id: `task-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setTasks([newTask, ...tasks]);
-  };
+
+    if (!created) {
+      throw new Error('Nie udało się utworzyć zadania.');
+    }
+
+    setTasks((prev) => [created, ...prev]);
+  } catch (error: any) {
+    console.error('Create task error:', error);
+
+    if (error?.data) {
+      const messages = Object.entries(error.data)
+        .flatMap(([field, messages]) => {
+          const text = Array.isArray(messages)
+            ? messages.join(', ')
+            : String(messages);
+
+          return `${field}: ${text}`;
+        })
+        .join('\n');
+
+      alert(messages);
+    } else {
+      alert('Nie udało się utworzyć zadania.');
+    }
+  }
+};
 
   const handleUpdateTaskStatus = async (taskId: string, status: SetterTask['status']) => {
     await apiUpdateTaskStatus(taskId, status);

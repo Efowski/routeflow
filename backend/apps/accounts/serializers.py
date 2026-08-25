@@ -24,6 +24,32 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+
+class CurrentUserSerializer(serializers.ModelSerializer):
+
+    name = serializers.SerializerMethodField()
+    gym_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+
+        fields = ['id', 'email', 'name', 'role', 'gym', 'gym_name']
+
+        read_only_fields = [
+            'id',
+            'email',
+            'name',
+            'role',
+            'gym',
+            'gym_name',
+        ]
+
+    def get_name(self, obj):
+        return obj.get_full_name()
+
+    def get_gym_name(self, obj):
+        return obj.gym.name if obj.gym else ''
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
