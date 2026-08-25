@@ -11,6 +11,7 @@ import {
   DEMO_SETTERS,
 } from './data/mockData';
 import {
+  apiLogout, 
   apiFetchRoutes,
   apiCreateRoute,
   apiUpdateRouteStatus,
@@ -44,17 +45,10 @@ import { AuthLanding, UserAccount } from './components/AuthLanding';
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAuthLanding, setShowAuthLanding] = useState(false);
+  const [showAuthLanding, setShowAuthLanding] = useState(true);
 
   // Default logged in user
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>({
-    id: 'usr-1',
-    email: 'jan.kowalski@vertigym.pl',
-    name: 'Jan Kowalski',
-    role: 'Gym Manager',
-    gymName: 'VertiGym Warszawska',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  });
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
 
   const [routes, setRoutes] = useState<RouteItem[]>([]);
   const [sectors, setSectors] = useState<Sector[]>([]);
@@ -96,16 +90,9 @@ export default function App() {
     setCurrentUser(user);
     setShowAuthLanding(false);
     setActiveTab('dashboard');
+    loadDataFromBackend();
 
-    if (user.isNewRegistration) {
-      setRoutes([]);
-      setSessions([]);
-      setTasks([]);
-      setLogs([]);
-      setSectors([]);
-    } else {
-      loadDataFromBackend();
-    }
+     
   };
 
   const handleLoadDemoData = () => {
@@ -115,9 +102,10 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
-    setShowAuthLanding(true);
-  };
+  apiLogout();
+  setCurrentUser(null);
+  setShowAuthLanding(true);
+};
 
   const handleAddRoute = async (
     newRouteData: Omit<RouteItem, 'id' | 'ageDays' | 'qrCodeUrl' | 'ratingAverage' | 'ratingCount' | 'ascentCount'>

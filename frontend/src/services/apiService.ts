@@ -3,11 +3,19 @@ import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog 
 const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
 // Helper for HTTP requests
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T | null> {
   try {
+    const accessToken = localStorage.getItem('access_token');
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
+        ...(accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : {}),
         ...options.headers,
       },
       ...options,
@@ -18,16 +26,53 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       return null;
     }
 
-    // Handle 204 No Content
     if (response.status === 204) {
       return {} as T;
     }
 
     return (await response.json()) as T;
   } catch (error) {
-    console.log(`Backend REST API offline or unreachable at ${API_BASE_URL}${endpoint}:`, error);
+    console.log(
+      `Backend REST API offline or unreachable at ${API_BASE_URL}${endpoint}:`,
+      error
+    );
     return null;
   }
+}
+
+export async function apiLogin(email: string, password: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/accounts/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Login failed [${response.status}]`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
+
+    return data;
+  } catch (error) {
+    console.log('Login API unavailable:', error);
+    return null;
+  }
+}
+
+export function apiLogout() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
 }
 
 // --- SECTORS API ---
@@ -243,12 +288,17 @@ export async function apiFetchSessions(): Promise<SettingSession[]> {
   }));
 }
 
-export async function apiCreateSession(session: Partial<SettingSession>): Promise<SettingSession | null> {
+export async function apiCreateSession(
+  session: Partial<SettingSession>
+): Promise<SettingSession | null> {
+
   const payload = {
     title: session.title,
     sector: session.sectorId,
-    scheduled_date: session.scheduledDate || new Date().toISOString().split('T')[0],
+    scheduled_date:
+      session.scheduledDate || new Date().toISOString().split('T')[0],
     status: session.status || 'planned',
+    lead_setter: session.leadSetterId || null,
     notes: session.notes || '',
   };
 
@@ -266,7 +316,7 @@ export async function apiCreateSession(session: Partial<SettingSession>): Promis
     sectorName: created.sector_name || session.sectorName || 'Sektor',
     scheduledDate: created.scheduled_date,
     status: created.status,
-    leadSetterId: session.leadSetterId || '',
+    leadSetterId: String(created.lead_setter || ''),
     leadSetterName: created.lead_setter_name || 'Head Setter',
     assignedSetterIds: [],
     targetRouteCount: 0,

@@ -19,6 +19,8 @@ import {
   Tag,
 } from 'lucide-react';
 
+import { apiLogin } from '../services/apiService';
+
 export interface UserAccount {
   id: string;
   email: string;
@@ -113,55 +115,43 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
       }
     } else {
       // Attempt login request to Django backend REST API
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/accounts/login/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: email,
-            password,
-          }),
-        });
+      const data = await apiLogin(email, password);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user) {
-            createdUser = {
-              id: String(data.user.id),
-              email: data.user.email,
-              name: data.user.name || email,
-              role:
-                data.user.role === 'gym_manager'
-                  ? 'Gym Manager'
-                  : data.user.role === 'head_setter'
-                  ? 'Head Setter'
-                  : 'Route Setter',
-              gymName: data.user.gym_name || 'VertiGym Climbing Center',
-              avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-              isNewRegistration: false,
-            };
-          }
-        }
-      } catch (err) {
-        console.log('Django server login not reachable, using browser state mode', err);
-      }
+  if (data?.user) {
+    createdUser = {
+      id: String(data.user.id),
+      email: data.user.email,
+      name: data.user.name || email,
+      role:
+        data.user.role === 'gym_manager'
+          ? 'Gym Manager'
+          : data.user.role === 'head_setter'
+          ? 'Head Setter'
+          : 'Route Setter',
+      gymName: data.user.gym_name || '',
+      avatarUrl: '',
+      isNewRegistration: false,
+    };
+  } else {
+    setErrorMessage('Nieprawidłowy adres e-mail lub hasło.');
+  }
     }
 
     // Fallback user object if Django backend is not currently running
     if (!createdUser) {
-      createdUser = {
-        id: `usr-${Date.now()}`,
-        email,
-        name: isRegisterMode ? fullName : email.includes('jan') ? 'Jan Kowalski' : 'Anna Nowak',
-        role: isRegisterMode ? role : 'Gym Manager',
-        gymName: gymName || 'VertiGym Climbing Center',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        isNewRegistration: isRegisterMode,
-      };
-    }
+  setIsLoading(false);
+  setErrorMessage(
+    isRegisterMode
+      ? 'Nie udało się utworzyć konta.'
+      : 'Nie udało się zalogować. Sprawdź email i hasło.'
+  );
+  return;
+}
 
-    setIsLoading(false);
-    onLoginSuccess(createdUser);
+  setIsLoading(false);
+  onLoginSuccess(createdUser);
+
+     
   };
 
   const handleDemoLogin = (demoRole: 'Gym Manager' | 'Head Setter' | 'Route Setter') => {
