@@ -1,3 +1,4 @@
+from datetime import date
 import uuid
 import qrcode
 from io import BytesIO
@@ -5,6 +6,7 @@ from django.core.files import File
 from django.db import models
 from django.utils import timezone
 from apps.gyms.models import Sector
+from apps.setting.models import SetterProfile
 
 class RouteType(models.TextChoices):
     BOULDER = 'boulder', 'Boulder'
@@ -28,8 +30,9 @@ class Route(models.Model):
     sector = models.ForeignKey(Sector, on_delete=models.CASCADE, related_name='routes', verbose_name="Sektor")
     wall_line_number = models.PositiveIntegerField(null=True, blank=True, verbose_name="Numer linii / stanowiska")
     hold_color = models.CharField(max_length=30, verbose_name="Kolor chwytów")
+    setter = models.ForeignKey(SetterProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='routes')
     setter_name = models.CharField(max_length=100, default="Główny Setter", verbose_name="Autor / Setter")
-    date_set = models.DateField(default=timezone.now, verbose_name="Data nakręcenia")
+    date_set = models.DateField(default=date.today, verbose_name="Data nakręcenia")
     status = models.CharField(
         max_length=20,
         choices=RouteStatus.choices,

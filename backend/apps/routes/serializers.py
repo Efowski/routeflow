@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from .models import Route
 
@@ -20,6 +21,7 @@ class RouteSerializer(serializers.ModelSerializer):
             'sector_name',
             'wall_line_number',
             'hold_color',
+            'setter',
             'setter_name',
             'date_set',
             'status',
@@ -51,3 +53,37 @@ class RouteSerializer(serializers.ModelSerializer):
         )
 
         return sector
+
+    def validate_setter(self, setter):
+        request = self.context.get('request')
+        if request and setter.user.gym != request.user.gym:
+            raise serializers.ValidationError(
+            'Setter must belong to your gym.'
+        )
+        return setter
+    
+
+    def validate_grade(self, value):
+        pattern = r'^[3-9][ABCabc]?\+?$'
+
+        if not re.fullmatch(pattern, value):
+            raise serializers.ValidationError(
+                'Podaj poprawną wycenę francuską, np. 6A, 6C+, 7B+.'
+            )
+
+        return value.upper()
+
+    def validate_v_grade(self, value):
+        if not value:
+            return value
+
+        pattern = r'^V([0-9]|1[0-7])$'
+
+        if not re.fullmatch(pattern, value.upper()):
+            raise serializers.ValidationError(
+                'Podaj poprawną wycenę V-Grade, np. V3, V7.'
+            )
+
+        return value.upper()
+
+        

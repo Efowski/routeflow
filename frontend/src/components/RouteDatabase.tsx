@@ -31,6 +31,10 @@ interface RouteDatabaseProps {
       'id' | 'ageDays' | 'qrCodeUrl' | 'ratingAverage' | 'ratingCount' | 'ascentCount'
     >
   ) => void;
+  onUpdateRoute: (
+  routeId: string,
+  updatedRoute: Partial<RouteItem>
+  ) => Promise<void>;  
 }
 
 export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
@@ -40,6 +44,7 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
   onSelectRouteForQR,
   onRetireRoute,
   onAddRoute,
+  onUpdateRoute,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<RouteType | 'all'>('all');
@@ -52,7 +57,18 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   const [selectedRouteDetail, setSelectedRouteDetail] = useState<RouteItem | null>(null);
+  const [isEditingRoute, setIsEditingRoute] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Edit Route Form State
+const [editName, setEditName] = useState('');
+const [editType, setEditType] = useState<RouteType>('boulder');
+const [editGrade, setEditGrade] = useState('');
+const [editVGrade, setEditVGrade] = useState('');
+const [editSectorId, setEditSectorId] = useState('');
+const [editHoldColor, setEditHoldColor] = useState<HoldColor>('blue');
+const [editSetterId, setEditSetterId] = useState('');
+const [editDescription, setEditDescription] = useState('');
 
   // New Route Form State
   const [name, setName] = useState('');
@@ -138,6 +154,48 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
     setName('');
     setDescription('');
   };
+
+  const handleStartEditRoute = () => {
+  if (!selectedRouteDetail) return;
+
+  setEditName(selectedRouteDetail.name);
+  setEditType(selectedRouteDetail.type);
+  setEditGrade(selectedRouteDetail.grade);
+  setEditVGrade(selectedRouteDetail.vGrade || '');
+  setEditSectorId(selectedRouteDetail.sectorId);
+  setEditHoldColor(selectedRouteDetail.holdColor);
+  setEditSetterId(selectedRouteDetail.setterId);
+  setEditDescription(selectedRouteDetail.description || '');
+
+  setIsEditingRoute(true);
+};
+
+const handleSubmitEditRoute = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!selectedRouteDetail) return;
+  if (!editName || !editSectorId || !editSetterId) return;
+
+  const sectorObj = sectors.find((s) => s.id === editSectorId);
+  const setterObj = setters.find((s) => s.id === editSetterId);
+
+  await onUpdateRoute(selectedRouteDetail.id, {
+    name: editName,
+    type: editType,
+    grade: editGrade,
+    vGrade: editType === 'boulder' ? editVGrade : undefined,
+    sectorId: editSectorId,
+    sectorName: sectorObj?.name || '',
+    holdColor: editHoldColor,
+    holdColorHex: colorHexMap[editHoldColor] || '#ef4444',
+    setterId: editSetterId,
+    setterName: setterObj?.name || '',
+    description: editDescription,
+  });
+
+  setSelectedRouteDetail(null);
+  setIsEditingRoute(false);
+};
 
   return (
     <div className="space-y-5">
@@ -528,86 +586,281 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
       )}
 
       {/* Modal: Details Slide-over / Modal */}
-      {selectedRouteDetail && (
-        <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-xl relative space-y-4 text-zinc-800">
-            <button
-              onClick={() => setSelectedRouteDetail(null)}
-              className="absolute top-3.5 right-3.5 text-zinc-400 hover:text-zinc-800 font-bold p-1"
-            >
-              ✕
-            </button>
+      
+      {/* Modal: Details Slide-over / Modal */}
+{selectedRouteDetail && (
+  <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-xl relative space-y-4 text-zinc-800">
 
-            <div className="flex items-center space-x-3">
-              <div
-                className="w-4 h-4 rounded-full border border-zinc-300"
-                style={{ backgroundColor: selectedRouteDetail.holdColorHex }}
-              />
-              <div>
-                <h3 className="text-base font-bold text-zinc-950">{selectedRouteDetail.name}</h3>
-                <p className="text-xs text-zinc-500">{selectedRouteDetail.sectorName}</p>
-              </div>
-              <span className="ml-auto text-sm font-black font-mono text-zinc-950 bg-zinc-100 border border-zinc-200 px-2.5 py-0.5 rounded-lg">
-                {selectedRouteDetail.grade}
-              </span>
-            </div>
+      <button
+        onClick={() => {
+          setSelectedRouteDetail(null);
+          setIsEditingRoute(false);
+        }}
+        className="absolute top-3.5 right-3.5 text-zinc-400 hover:text-zinc-800 font-bold p-1"
+      >
+        ✕
+      </button>
 
-            {/* Quick stats grid */}
-            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-              <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-                <span className="text-[10px] text-zinc-400 font-mono block uppercase">Setter</span>
-                <strong className="text-zinc-900 block truncate text-[11px]">{selectedRouteDetail.setterName}</strong>
-              </div>
-              <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-                <span className="text-[10px] text-zinc-400 font-mono block uppercase">Data</span>
-                <strong className="text-zinc-900 block text-[11px] font-mono">{selectedRouteDetail.dateSet}</strong>
-              </div>
-              <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-                <span className="text-[10px] text-zinc-400 font-mono block uppercase">Wiek</span>
-                <strong className="text-[#ff4d00] block text-[11px] font-mono">{selectedRouteDetail.ageDays}d</strong>
-              </div>
-              <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-                <span className="text-[10px] text-zinc-400 font-mono block uppercase">Sends</span>
-                <strong className="text-emerald-700 block text-[11px] font-mono">{selectedRouteDetail.ascentCount}</strong>
-              </div>
-            </div>
+      {isEditingRoute ? (
+  <form onSubmit={handleSubmitEditRoute} className="space-y-3 text-xs">
+  <h3 className="text-base font-bold text-zinc-950">
+    Edytuj drogę
+  </h3>
 
-            {/* Description */}
-            <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/70 text-xs space-y-0.5">
-              <span className="font-semibold text-zinc-700">Notatki techniczne settera:</span>
-              <p className="text-zinc-600 italic">{selectedRouteDetail.description || 'Brak dodatkowych uwag.'}</p>
-            </div>
+  <div>
+    <label className="block text-zinc-700 font-semibold mb-1">
+      Nazwa Drogi / Boulderu *
+    </label>
+    <input
+      type="text"
+      required
+      value={editName}
+      onChange={(e) => setEditName(e.target.value)}
+      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+    />
+  </div>
 
-            {/* Consens & Feedback info */}
-            <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/70 flex items-center justify-between text-xs">
-              <div>
-                <span className="text-[10px] text-zinc-400 font-mono uppercase block">Wycena Oficjalna:</span>
-                <strong className="text-zinc-950 font-mono">{selectedRouteDetail.grade}</strong>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-zinc-400 font-mono uppercase block">Konsensus Wspinaczy:</span>
-                <strong className="text-[#ff4d00] font-mono">
-                  {selectedRouteDetail.consensusGrade || selectedRouteDetail.grade}
-                </strong>
-              </div>
-            </div>
+  <div className="grid grid-cols-2 gap-2.5">
+    <div>
+      <label className="block text-zinc-700 font-semibold mb-1">
+        Typ
+      </label>
+      <select
+        value={editType}
+        onChange={(e) => setEditType(e.target.value as RouteType)}
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+      >
+        <option value="boulder">🧩 Boulder</option>
+        <option value="rope">🧗 Lina / Obiekt</option>
+      </select>
+    </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center space-x-2 pt-1">
-              <button
-                onClick={() => {
-                  onSelectRouteForQR(selectedRouteDetail);
-                  setSelectedRouteDetail(null);
-                }}
-                className="flex-1 bg-[#ff4d00] hover:bg-[#e04400] text-white py-2 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span>Generuj Etykietę QR</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+    <div>
+      <label className="block text-zinc-700 font-semibold mb-1">
+        Wycena
+      </label>
+      <input
+        type="text"
+        required
+        value={editGrade}
+        onChange={(e) => setEditGrade(e.target.value)}
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
+      />
+    </div>
+  </div>
+
+  {editType === 'boulder' && (
+    <div>
+      <label className="block text-zinc-700 font-semibold mb-1">
+        Wycena V-Scale
+      </label>
+      <input
+        type="text"
+        value={editVGrade}
+        onChange={(e) => setEditVGrade(e.target.value)}
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono focus:outline-none focus:border-[#ff4d00]"
+      />
+    </div>
+  )}
+
+  <div className="grid grid-cols-2 gap-2.5">
+    <div>
+      <label className="block text-zinc-700 font-semibold mb-1">
+        Sektor *
+      </label>
+      <select
+        value={editSectorId}
+        onChange={(e) => setEditSectorId(e.target.value)}
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+      >
+        {sectors.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div>
+      <label className="block text-zinc-700 font-semibold mb-1">
+        Kolor Chwytów
+      </label>
+      <select
+        value={editHoldColor}
+        onChange={(e) => setEditHoldColor(e.target.value as HoldColor)}
+        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+      >
+        <option value="blue">Niebieski</option>
+        <option value="red">Czerwony</option>
+        <option value="black">Czarny</option>
+        <option value="yellow">Żółty</option>
+        <option value="green">Zielony</option>
+        <option value="purple">Fioletowy</option>
+        <option value="pink">Różowy</option>
+        <option value="white">Biały</option>
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label className="block text-zinc-700 font-semibold mb-1">
+      Routesetter *
+    </label>
+    <select
+      value={editSetterId}
+      onChange={(e) => setEditSetterId(e.target.value)}
+      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+    >
+      {setters.map((set) => (
+        <option key={set.id} value={set.id}>
+          {set.name} ({set.role})
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label className="block text-zinc-700 font-semibold mb-1">
+      Opis / Wskazówki
+    </label>
+    <textarea
+      rows={3}
+      value={editDescription}
+      onChange={(e) => setEditDescription(e.target.value)}
+      className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+    />
+  </div>
+
+  <div className="pt-2 flex items-center justify-end space-x-2">
+    <button
+      type="button"
+      onClick={() => setIsEditingRoute(false)}
+      className="px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-700 font-semibold hover:bg-zinc-200 transition"
+    >
+      Anuluj
+    </button>
+
+    <button
+      type="submit"
+      className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs"
+    >
+      Zapisz zmiany
+    </button>
+  </div>
+</form>
+) : (
+  <>
+    <div className="flex items-center space-x-3">
+      <div
+        className="w-4 h-4 rounded-full border border-zinc-300"
+        style={{ backgroundColor: selectedRouteDetail.holdColorHex }}
+      />
+      <div>
+        <h3 className="text-base font-bold text-zinc-950">
+          {selectedRouteDetail.name}
+        </h3>
+        <p className="text-xs text-zinc-500">
+          {selectedRouteDetail.sectorName}
+        </p>
+      </div>
+      <span className="ml-auto text-sm font-black font-mono text-zinc-950 bg-zinc-100 border border-zinc-200 px-2.5 py-0.5 rounded-lg">
+        {selectedRouteDetail.grade}
+      </span>
+    </div>
+
+    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+      <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
+        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+          Setter
+        </span>
+        <strong className="text-zinc-900 block truncate text-[11px]">
+          {selectedRouteDetail.setterName}
+        </strong>
+      </div>
+
+      <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
+        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+          Data
+        </span>
+        <strong className="text-zinc-900 block text-[11px] font-mono">
+          {selectedRouteDetail.dateSet}
+        </strong>
+      </div>
+
+      <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
+        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+          Wiek
+        </span>
+        <strong className="text-[#ff4d00] block text-[11px] font-mono">
+          {selectedRouteDetail.ageDays}d
+        </strong>
+      </div>
+
+      <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
+        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+          Sends
+        </span>
+        <strong className="text-emerald-700 block text-[11px] font-mono">
+          {selectedRouteDetail.ascentCount}
+        </strong>
+      </div>
+    </div>
+
+    <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/70 text-xs space-y-0.5">
+      <span className="font-semibold text-zinc-700">
+        Notatki techniczne settera:
+      </span>
+      <p className="text-zinc-600 italic">
+        {selectedRouteDetail.description || 'Brak dodatkowych uwag.'}
+      </p>
+    </div>
+
+    <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/70 flex items-center justify-between text-xs">
+      <div>
+        <span className="text-[10px] text-zinc-400 font-mono uppercase block">
+          Wycena Oficjalna:
+        </span>
+        <strong className="text-zinc-950 font-mono">
+          {selectedRouteDetail.grade}
+        </strong>
+      </div>
+
+      <div className="text-right">
+        <span className="text-[10px] text-zinc-400 font-mono uppercase block">
+          Konsensus Wspinaczy:
+        </span>
+        <strong className="text-[#ff4d00] font-mono">
+          {selectedRouteDetail.consensusGrade || selectedRouteDetail.grade}
+        </strong>
+      </div>
+    </div>
+
+    <div className="flex items-center space-x-2 pt-1">
+      <button
+        onClick={handleStartEditRoute}
+        className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 py-2 rounded-lg font-bold text-xs flex items-center justify-center transition cursor-pointer border border-zinc-200"
+      >
+        Edytuj
+      </button>
+
+      <button
+        onClick={() => {
+          onSelectRouteForQR(selectedRouteDetail);
+          setSelectedRouteDetail(null);
+        }}
+        className="flex-1 bg-[#ff4d00] hover:bg-[#e04400] text-white py-2 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
+      >
+        <QrCode className="w-3.5 h-3.5" />
+        <span>Generuj Etykietę QR</span>
+      </button>
+    </div>
+  </>
+)}
+      
+    </div>
+  </div>
+)}
 
       {/* Modal: Add New Route */}
       {isAddModalOpen && (

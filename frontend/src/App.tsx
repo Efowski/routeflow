@@ -15,7 +15,9 @@ import {
   apiFetchProfile,
   apiFetchRoutes,
   apiCreateRoute,
+  apiUpdateRoute,
   apiUpdateRouteStatus,
+  apiRetireRoute,
   apiFetchSectors,
   apiCreateSector,
   apiFetchSetters,
@@ -160,29 +162,94 @@ export default function App() {
 };
 
   const handleAddRoute = async (
-    newRouteData: Omit<RouteItem, 'id' | 'ageDays' | 'qrCodeUrl' | 'ratingAverage' | 'ratingCount' | 'ascentCount'>
-  ) => {
-    // Attempt Django REST API post
+  newRouteData: Omit<
+    RouteItem,
+    'id' | 'ageDays' | 'qrCodeUrl' | 'ratingAverage' | 'ratingCount' | 'ascentCount'
+  >
+) => {
+  try {
     const createdApiRoute = await apiCreateRoute(newRouteData);
 
-    const newId = createdApiRoute?.id || `route-${Date.now()}`;
-    const newRoute: RouteItem = createdApiRoute || {
-      ...newRouteData,
-      id: newId,
-      ageDays: 0,
-      ratingAverage: 5.0,
-      ratingCount: 1,
-      ascentCount: 0,
-      qrCodeUrl: `https://vertigym.app/r/${newId}`,
-    };
+    if (!createdApiRoute) {
+      throw new Error('Nie udało się utworzyć drogi.');
+    }
 
-    setRoutes([newRoute, ...routes]);
-  };
+    setRoutes((prev) => [createdApiRoute, ...prev]);
+  } catch (error: any) {
+    console.error('Create route error:', error);
+
+    if (error?.data) {
+      const messages = Object.entries(error.data)
+        .flatMap(([field, messages]) => {
+          const text = Array.isArray(messages)
+            ? messages.join(', ')
+            : String(messages);
+
+          return `${field}: ${text}`;
+        })
+        .join('\n');
+
+      alert(messages);
+    } else {
+      alert('Nie udało się utworzyć drogi.');
+    }
+  }
+};
+
+const handleUpdateRoute = async (
+  routeId: string,
+  updatedRouteData: Partial<RouteItem>
+) => {
+  try {
+    const updatedRoute = await apiUpdateRoute(routeId, updatedRouteData);
+
+    if (!updatedRoute) {
+      throw new Error('Nie udało się zaktualizować drogi.');
+    }
+
+    setRoutes((prev) =>
+      prev.map((route) =>
+        route.id === routeId ? updatedRoute : route
+      )
+    );
+  } catch (error: any) {
+    console.error('Update route error:', error);
+
+    if (error?.data) {
+      const messages = Object.entries(error.data)
+        .flatMap(([field, messages]) => {
+          const text = Array.isArray(messages)
+            ? messages.join(', ')
+            : String(messages);
+
+          return `${field}: ${text}`;
+        })
+        .join('\n');
+
+      alert(messages);
+    } else {
+      alert('Nie udało się zaktualizować drogi.');
+    }
+
+    throw error;
+  }
+};
+
 
   const handleRetireRoute = async (routeId: string) => {
-    await apiUpdateRouteStatus(routeId, 'deprecated');
-    setRoutes(routes.map((r) => (r.id === routeId ? { ...r, status: 'deprecated' } : r)));
-  };
+  const success = await apiRetireRoute(routeId);
+
+  if (!success) {
+    alert('Nie udało się zdemontować drogi.');
+    return;
+  }
+
+  setRoutes((prev) =>
+    prev.map((r) =>
+      r.id === routeId ? { ...r, status: 'deprecated' } : r
+    )
+  );
+};
 
   const handleAddLog = async (newLogData: Omit<ResetHistoryLog, 'id'>) => {
     const created = await apiCreateResetLog(newLogData);
@@ -282,44 +349,54 @@ export default function App() {
   };
 
   const handleConvertTaskToRoute = async (task: SetterTask) => {
-    const newRouteData = {
-      name: task.title,
-      type: task.type,
-      grade: task.targetGrade,
-      sectorId: sectors[0]?.id || '',
-      sectorName: task.sectorName,
-      holdColor: task.holdColor,
-      holdColorHex:
-        task.holdColor === 'blue'
-          ? '#3b82f6'
-          : task.holdColor === 'red'
-          ? '#ef4444'
-          : task.holdColor === 'black'
-          ? '#18181b'
-          : '#eab308',
-      setterId: task.setterId,
-      setterName: task.setterName,
-      dateSet: new Date().toISOString().split('T')[0],
-      status: 'active' as const,
-      description: task.description,
-      tags: ['New', 'Fresh Set'],
-    };
+  const sector = sectors.find((s) => s.name === task.sectorName);
 
-    const createdApiRoute = await apiCreateRoute(newRouteData);
-    const newId = createdApiRoute?.id || `route-${Date.now()}`;
-    const newRoute: RouteItem = createdApiRoute || {
-      ...newRouteData,
-      id: newId,
-      ageDays: 0,
-      ratingAverage: 5.0,
-      ratingCount: 1,
-      ascentCount: 0,
-      qrCodeUrl: `https://vertigym.app/r/${newId}`,
-    };
-
-    setRoutes([newRoute, ...routes]);
-    setTasks(tasks.map((t) => (t.id === task.id ? { ...t, createdRouteId: newId } : t)));
+  if (!sector) {
+  alert(`Nie znaleziono sektora: ${task.sectorName}`);
+  return;
+}
+    
+  const newRouteData = {
+    name: task.title,
+    type: task.type,
+    grade: task.targetGrade,
+    sectorId: sector.id,
+    sectorName: sector.name,
+    holdColor: task.holdColor,
+    holdColorHex:
+      task.holdColor === 'blue'
+        ? '#3b82f6'
+        : task.holdColor === 'red'
+        ? '#ef4444'
+        : task.holdColor === 'black'
+        ? '#18181b'
+        : '#eab308',
+    setterId: task.setterId,
+    setterName: task.setterName,
+    dateSet: new Date().toISOString().split('T')[0],
+    status: 'active' as const,
+    description: task.description,
+    tags: ['New', 'Fresh Set'],
   };
+
+  const createdApiRoute = await apiCreateRoute(newRouteData);
+
+  if (!createdApiRoute) {
+    alert('Nie udało się utworzyć drogi z zadania.');
+    return;
+  }
+
+  setRoutes((prev) => [createdApiRoute, ...prev]);
+
+  setTasks((prev) =>
+    prev.map((t) =>
+      t.id === task.id
+        ? { ...t, createdRouteId: createdApiRoute.id }
+        : t
+    )
+  );
+};
+
 
   const handleAddSector = async (newSectorData: {
     name: string;
@@ -422,6 +499,7 @@ export default function App() {
               onSelectRouteForQR={handleSelectRouteForQR}
               onRetireRoute={handleRetireRoute}
               onAddRoute={handleAddRoute}
+              onUpdateRoute={handleUpdateRoute}
             />
           )}
 

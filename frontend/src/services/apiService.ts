@@ -1,6 +1,6 @@
 import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog } from '../types';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 
 export type ApiErrorData = Record<string, string[] | string>;
@@ -14,6 +14,7 @@ async function request<T>(
     const accessToken = localStorage.getItem('access_token');
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(accessToken
@@ -139,33 +140,54 @@ export async function apiDeleteSector(id: string): Promise<boolean> {
 }
 
 // --- ROUTES API ---
+
+const colorHexMap: Record<string, string> = {
+  red: '#ef4444',
+  blue: '#3b82f6',
+  yellow: '#eab308',
+  green: '#10b981',
+  black: '#18181b',
+  purple: '#a855f7',
+  orange: '#ff4d00',
+  white: '#f4f4f5',
+  pink: '#ec4899',
+  wood: '#a16207',
+};
+
+function mapApiRoute(r: any): RouteItem {
+  const holdColor = r.hold_color || 'red';
+
+  return {
+    id: String(r.id),
+    name: r.name,
+    type: r.route_type === 'boulder' ? 'boulder' : 'rope',
+    grade: r.grade || '',
+    vGrade: r.v_grade || undefined,
+    sectorId: String(r.sector || ''),
+    sectorName: r.sector_name || '',
+    wallLineNumber: r.wall_line_number || undefined,
+    holdColor,
+    holdColorHex: colorHexMap[holdColor] || '#a1a1aa',
+    setterId: String(r.setter || ''),
+    setterName: r.setter_name || '',
+    dateSet: r.date_set || '',
+    ageDays: r.age_days ?? 0,
+    status: r.status,
+    description: r.description || '',
+    ratingAverage: r.rating_average ?? 0,
+    ratingCount: r.rating_count ?? 0,
+    ascentCount: r.ascent_count ?? 0,
+    qrCodeUrl: r.qr_code || '',
+    tags: r.tags || [],
+  };
+}
+
+
 export async function apiFetchRoutes(): Promise<RouteItem[]> {
   const data = await request<any[]>('/routes/routes/');
   if (!data || !Array.isArray(data)) return [];
 
-  return data.map((r) => ({
-    id: String(r.id),
-    name: r.name,
-    type: r.route_type === 'boulder' ? 'boulder' : 'rope',
-    grade: r.grade || '6a',
-    vGrade: r.v_grade || 'V2',
-    sectorId: String(r.sector || ''),
-    sectorName: r.sector_name || 'Sektor Główny',
-    wallLineNumber: r.wall_line_number || 1,
-    holdColor: r.hold_color || 'red',
-    holdColorHex: '#ef4444',
-    setterId: 'set-1',
-    setterName: r.setter_name || 'Główny Setter',
-    dateSet: r.date_set || new Date().toISOString().split('T')[0],
-    ageDays: r.age_days || 0,
-    status: r.status || 'active',
-    description: r.description || '',
-    ratingAverage: r.rating_average || 5.0,
-    ratingCount: r.ascent_count || 0,
-    ascentCount: r.ascent_count || 0,
-    qrCodeUrl: r.qr_code || '',
-    tags: ['Sektor', r.route_type],
-  }));
+  return data.map(mapApiRoute);
 }
 
 export async function apiCreateRoute(route: Partial<RouteItem>): Promise<RouteItem | null> {
@@ -177,6 +199,7 @@ export async function apiCreateRoute(route: Partial<RouteItem>): Promise<RouteIt
     sector: route.sectorId,
     wall_line_number: route.wallLineNumber || 1,
     hold_color: route.holdColor || 'red',
+    setter: route.setterId || null,
     setter_name: route.setterName || 'Główny Setter',
     date_set: route.dateSet || new Date().toISOString().split('T')[0],
     status: route.status || 'active',
@@ -190,36 +213,53 @@ export async function apiCreateRoute(route: Partial<RouteItem>): Promise<RouteIt
 
   if (!created) return null;
 
-  return {
-    id: String(created.id),
-    name: created.name,
-    type: created.route_type === 'boulder' ? 'boulder' : 'rope',
-    grade: created.grade,
-    vGrade: created.v_grade,
-    sectorId: String(created.sector),
-    sectorName: created.sector_name || route.sectorName || 'Sektor',
-    wallLineNumber: created.wall_line_number,
-    holdColor: created.hold_color,
-    holdColorHex: route.holdColorHex || '#ef4444',
-    setterId: route.setterId || 'set-1',
-    setterName: created.setter_name,
-    dateSet: created.date_set,
-    ageDays: created.age_days || 0,
-    status: created.status,
-    description: created.description,
-    ratingAverage: 5.0,
-    ratingCount: 0,
-    ascentCount: 0,
-    qrCodeUrl: created.qr_code || '',
-    tags: route.tags || [],
-  };
+  return mapApiRoute(created);
 }
+
+
+export async function apiUpdateRoute(
+  id: string,
+  route: Partial<RouteItem>
+): Promise<RouteItem | null> {
+  const payload = {
+    name: route.name,
+    route_type: route.type,
+    grade: route.grade,
+    v_grade: route.vGrade,
+    sector: route.sectorId,
+    wall_line_number: route.wallLineNumber,
+    hold_color: route.holdColor,
+    setter: route.setterId,
+    date_set: route.dateSet,
+    status: route.status,
+    description: route.description,
+  };
+
+  const updated = await request<any>(`/routes/routes/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+
+  if (!updated) return null;
+
+  return mapApiRoute(updated);
+}
+
 
 export async function apiUpdateRouteStatus(id: string, status: string): Promise<boolean> {
   const res = await request<any>(`/routes/routes/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
+  return res !== null;
+}
+
+
+export async function apiRetireRoute(id: string): Promise<boolean> {
+  const res = await request<any>(`/routes/routes/${id}/retire/`, {
+    method: 'POST',
+  });
+
   return res !== null;
 }
 
