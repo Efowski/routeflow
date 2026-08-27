@@ -16,7 +16,7 @@ import {
   apiFetchRoutes,
   apiCreateRoute,
   apiUpdateRoute,
-  apiUpdateRouteStatus,
+   
   apiRetireRoute,
   apiFetchSectors,
   apiCreateSector,
@@ -28,8 +28,10 @@ import {
   apiFetchTasks,
   apiCreateTask,
   apiUpdateTaskStatus,
+  
   apiFetchResetLogs,
   apiCreateResetLog,
+  apiPublishTask,
 } from './services/apiService';
 import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog } from './types';
 import { Sidebar, TabType } from './components/Sidebar';
@@ -349,10 +351,8 @@ const handleUpdateRoute = async (
   };
 
   const handleConvertTaskToRoute = async (task: SetterTask) => {
-  const sector = sectors.find((s) => s.name === task.sectorName);
-
-  if (!sector) {
-  alert(`Nie znaleziono sektora: ${task.sectorName}`);
+  if (!task.sectorId) {
+  alert('To zadanie nie ma przypisanego sektora.');
   return;
 }
     
@@ -360,8 +360,8 @@ const handleUpdateRoute = async (
     name: task.title,
     type: task.type,
     grade: task.targetGrade,
-    sectorId: sector.id,
-    sectorName: sector.name,
+    sectorId: task.sectorId,
+    sectorName: task.sectorName, 
     holdColor: task.holdColor,
     holdColorHex:
       task.holdColor === 'blue'
@@ -379,22 +379,21 @@ const handleUpdateRoute = async (
     tags: ['New', 'Fresh Set'],
   };
 
-  const createdApiRoute = await apiCreateRoute(newRouteData);
+  
+  const published = await apiPublishTask(task.id);
 
-  if (!createdApiRoute) {
-    alert('Nie udało się utworzyć drogi z zadania.');
-    return;
-  }
+if (!published) {
+  alert('Nie udało się opublikować zadania jako drogi.');
+  return;
+}
 
-  setRoutes((prev) => [createdApiRoute, ...prev]);
+setRoutes((prev) => [published.route, ...prev]);
 
-  setTasks((prev) =>
-    prev.map((t) =>
-      t.id === task.id
-        ? { ...t, createdRouteId: createdApiRoute.id }
-        : t
-    )
-  );
+setTasks((prev) =>
+  prev.map((t) =>
+    t.id === task.id ? published.task : t
+  )
+);
 };
 
 

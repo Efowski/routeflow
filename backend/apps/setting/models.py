@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 
 from django.contrib.auth.models import User
 from apps.gyms.models import Sector
+ 
+
 
 class SetterProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='setter_profile')
@@ -68,6 +70,13 @@ class SetterTask(models.Model):
     title = models.CharField(max_length=120, verbose_name="Zadanie / Prototyp")
     target_grade = models.CharField(max_length=10, verbose_name="Docelowa wycena")
     hold_color = models.CharField(max_length=20, verbose_name="Kolor chwytów")
+    created_route = models.OneToOneField('routes.Route', on_delete=models.SET_NULL, blank=True, null=True, related_name='source_task')
+    route_type = models.CharField(max_length=20, choices=[
+        ('boulder', 'Boulder'),
+        ('rope', 'Rope'),
+    ],
+    default='boulder',)
+    sector = models.ForeignKey(Sector, on_delete=models.PROTECT, null=True, blank=True, related_name='setter_tasks' )
     sector_name = models.CharField(max_length=100, default="Sektor Główny")
     status = models.CharField(
         max_length=20,

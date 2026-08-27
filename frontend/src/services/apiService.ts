@@ -391,8 +391,10 @@ export async function apiFetchTasks(): Promise<SetterTask[]> {
     setterName: t.setter_name || 'Setter',
     title: t.title,
     description: t.description || '',
-    type: 'boulder',
+    type: t.route_type === 'boulder' ? 'boulder' : 'rope',
+    sectorId: String(t.sector || ''),
     sectorName: t.sector_name || 'Sektor',
+    createdRouteId: t.created_route  ? String(t.created_route)   : undefined,
     targetGrade: t.target_grade || '6A',
     holdColor: t.hold_color || 'red',
     status: t.status || 'todo',
@@ -401,6 +403,46 @@ export async function apiFetchTasks(): Promise<SetterTask[]> {
   }));
 }
 
+
+export async function apiPublishTask(
+  taskId: string
+): Promise<{ task: SetterTask; route: RouteItem } | null> {
+  const data = await request<any>(
+    `/setting/tasks/${taskId}/publish/`,
+    {
+      method: 'POST',
+    }
+  );
+
+  if (!data) return null;
+
+  return {
+    task: {
+      id: String(data.task.id),
+      sessionId: String(data.task.session || ''),
+      setterId: String(data.task.setter || ''),
+      setterName: data.task.setter_name || '',
+      title: data.task.title,
+      description: data.task.description || '',
+      type: data.task.route_type === 'boulder' ? 'boulder' : 'rope',
+      sectorId: String(data.task.sector || ''),
+      sectorName: data.task.sector_name || '',
+      targetGrade: data.task.target_grade,
+      holdColor: data.task.hold_color,
+      status: data.task.status,
+      createdAt: data.task.created_at || '',
+      dueDate: data.task.due_date || '',
+      createdRouteId: data.task.created_route
+        ? String(data.task.created_route)
+        : undefined,
+    },
+    route: mapApiRoute(data.route),
+  };
+}
+
+
+
+
 export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTask | null> {
   const payload = {
     title: task.title,
@@ -408,7 +450,9 @@ export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTa
     setter: task.setterId,
     target_grade: task.targetGrade || '6A',
     hold_color: task.holdColor || 'red',
+    sector: task.sectorId,
     sector_name: task.sectorName || 'Sektor Główny',
+    route_type: task.type,
     status: task.status || 'todo',
     description: task.description || '',
     due_date: task.dueDate || new Date().toISOString().split('T')[0],
@@ -429,6 +473,7 @@ export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTa
     title: created.title,
     description: created.description,
     type: task.type || 'boulder',
+    sectorId: String(created.sector || ''),
     sectorName: created.sector_name,
     targetGrade: created.target_grade,
     holdColor: created.hold_color,
@@ -445,6 +490,9 @@ export async function apiUpdateTaskStatus(id: string, status: string): Promise<b
   });
   return res !== null;
 }
+
+
+
 
 // --- RESET HISTORY LOGS API ---
 export async function apiFetchResetLogs(): Promise<ResetHistoryLog[]> {

@@ -53,7 +53,9 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
       title,
       description,
       type,
+      sectorId: sessionObj ? sessionObj.sectorId : '',
       sectorName: sessionObj ? sessionObj.sectorName : 'Sector',
+      
       targetGrade,
       holdColor,
       status: 'todo',
