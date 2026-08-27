@@ -75,6 +75,7 @@ export interface SetterTask {
   title: string;
   description: string;
   type: RouteType;
+  sectorId: string;
   sectorName: string;
   targetGrade: string;
   holdColor: HoldColor;
