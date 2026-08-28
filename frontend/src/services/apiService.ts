@@ -113,6 +113,7 @@ export async function apiCreateSector(sector: Partial<Sector>): Promise<Sector |
     color_code: sector.colorCode || '#3b82f6',
     last_reset_date: sector.lastResetDate,
     next_scheduled_reset: sector.nextScheduledReset,
+    
   };
 
   const created = await request<any>('/gyms/sectors/', {
@@ -334,9 +335,11 @@ export async function apiFetchSessions(): Promise<SettingSession[]> {
     leadSetterId: String(sess.lead_setter || ''),
     leadSetterName: sess.lead_setter_name || 'Szef Resetu',
     assignedSetterIds: [],
-    targetRouteCount: sess.tasks ? sess.tasks.length : 5,
+     
+    targetRouteCount: sess.target_route_count ?? 0,
+    targetGradeBreakdown: sess.target_grade_breakdown || {},
     notes: sess.notes || '',
-    targetGradeBreakdown: {},
+    
   }));
 }
 
@@ -352,6 +355,8 @@ export async function apiCreateSession(
     status: session.status || 'planned',
     lead_setter: session.leadSetterId || null,
     notes: session.notes || '',
+    target_route_count: session.targetRouteCount,
+    target_grade_breakdown: session.targetGradeBreakdown,
   };
 
   const created = await request<any>('/setting/sessions/', {
@@ -547,4 +552,50 @@ export async function apiUpdateSessionStatus(
   });
 
   return res !== null;
+}
+
+export async function apiUpdateSession(
+  id: string,
+  session: Partial<SettingSession>
+): Promise<SettingSession | null> {
+  const payload = {
+    title: session.title,
+    sector: session.sectorId,
+    scheduled_date: session.scheduledDate,
+    lead_setter: session.leadSetterId || null,
+    notes: session.notes,
+    target_route_count: session.targetRouteCount,
+    target_grade_breakdown: session.targetGradeBreakdown,
+  };
+
+  const updated = await request<any>(
+    `/setting/sessions/${id}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!updated) return null;
+  
+
+  return {
+    id: String(updated.id),
+    title: updated.title,
+    sectorId: String(updated.sector || ''),
+    sectorName: updated.sector_name || '',
+    scheduledDate: updated.scheduled_date || '',
+    status: updated.status,
+    leadSetterId: String(updated.lead_setter || ''),
+    leadSetterName: updated.lead_setter_name || '',
+    assignedSetterIds: session.assignedSetterIds || [],
+    targetRouteCount: updated.target_route_count ?? session.targetRouteCount ?? 0,
+
+    notes: updated.notes ?? session.notes ?? '',
+
+  targetGradeBreakdown:
+  updated.target_grade_breakdown ??
+  session.targetGradeBreakdown ??
+  {},   
+  };
 }
