@@ -76,6 +76,42 @@ class SettingSessionSerializer(serializers.ModelSerializer):
                         'as the setting session.'
                     )
                 })
+
+        target_route_count = attrs.get('target_route_count', getattr(self.instance, 'target_route_count', 0))
+        target_grade_breakdown = attrs.get('target_grade_breakdown', getattr(self.instance, 'target_grade_breakdown', {}))
+
+        total_planed_routes = sum(target_grade_breakdown.values())
+
+        if total_planed_routes != target_route_count:
+            raise ValidationError({
+                'target_grade_breakdown': (
+                    f'Suma dróg w rozkładzie wycen musi wynosić'
+                    f'{target_route_count}. Obecnie wynosi'
+                    f'{total_planed_routes}'
+                )
+            })
+        new_status = attrs.get('status')
+
+        if self.instance and new_status:
+            current_status = self.instance.status
+
+            allowed_transitions = {
+                'planned': {'in_progress'},
+                'in_progress': {'completed'},
+                'completed': set(),
+            }
+
+            if (
+                new_status != current_status
+                and new_status not in allowed_transitions[current_status]
+            ):
+                raise serializers.ValidationError({
+                    'status': (
+                        f'Nieprawidłowa zmiana statusu: '
+                        f'{current_status} → {new_status}.'
+                    )
+                })
+                
         return attrs
 
 

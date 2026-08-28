@@ -40,6 +40,12 @@ class SettingSession(models.Model):
         blank=True,
         related_name='led_sessions'
     )
+    target_route_count = models.PositiveIntegerField(default=0, verbose_name='Docelowa liczba dróg')
+    target_grade_breakdown = models.JSONField(
+    default=dict,
+    blank=True,
+    verbose_name="Planowany rozkład wycen",
+        )
     notes = models.TextField(blank=True, verbose_name="Wskazówki i koncepcja")
 
 

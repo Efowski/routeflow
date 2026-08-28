@@ -8,6 +8,10 @@ interface SettingPlannerProps {
   setters: Setter[];
   onAddSession: (newSession: Omit<SettingSession, 'id'>) => void;
   onUpdateSessionStatus: (sessionId: string, status: 'planned' | 'in_progress' | 'completed') => void;
+  onUpdateSession: (
+  id: string,
+  updates: Partial<SettingSession>
+  ) => void;
 }
 
 export const SettingPlanner: React.FC<SettingPlannerProps> = ({
@@ -16,9 +20,19 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   setters,
   onAddSession,
   onUpdateSessionStatus,
+  onUpdateSession,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
+  const [editingSession, setEditingSession] = useState<SettingSession | null>(null);
+  const [targetGradeBreakdown, setTargetGradeBreakdown] = useState<
+  Record<string, number>
+>({
+  '6A': 0,
+  '6B': 0,
+  '6C': 0,
+  '7A': 0,
+});
   const [sectorId, setSectorId] = useState(sectors[0]?.id || '');
   const [scheduledDate, setScheduledDate] = useState('');
   const [leadSetterId, setLeadSetterId] = useState(setters[0]?.id || '');
@@ -28,26 +42,48 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !sectorId || !scheduledDate) return;
+     
 
     const sectorObj = sectors.find((s) => s.id === sectorId);
     const leadSetterObj = setters.find((set) => set.id === leadSetterId);
+    const totalPlannedRoutes = Object.values(targetGradeBreakdown).reduce(
+  (sum, count) => sum + count,
+  0
+);
 
-    onAddSession({
-      title,
-      sectorId,
-      sectorName: sectorObj ? sectorObj.name : 'Sector',
-      scheduledDate,
-      status: 'planned',
-      leadSetterId,
-      leadSetterName: leadSetterObj ? leadSetterObj.name : 'Head Setter',
-      assignedSetterIds: [leadSetterId],
-      targetRouteCount: Number(targetRouteCount),
-      notes,
-      targetGradeBreakdown: { '6A': 4, '6B': 4, '6C': 2, '7A': 2 },
-    });
+if (totalPlannedRoutes !== Number(targetRouteCount)) {
+  alert(
+    `Suma dróg w rozkładzie wycen musi wynosić ${targetRouteCount}. Obecnie wynosi ${totalPlannedRoutes}.`
+  );
+  return;
+}
 
+   const sessionData = {
+  title,
+  sectorId,
+  sectorName: sectorObj ? sectorObj.name : 'Sector',
+  scheduledDate,
+  status: editingSession ? editingSession.status : 'planned' as const,
+  leadSetterId,
+  leadSetterName: leadSetterObj ? leadSetterObj.name : 'Head Setter',
+  assignedSetterIds: editingSession
+    ? editingSession.assignedSetterIds
+    : [leadSetterId],
+  targetRouteCount: Number(targetRouteCount),
+  notes,
+  targetGradeBreakdown,
+};
+
+  
+  if (editingSession) {
+    onUpdateSession(editingSession.id, sessionData);
+  } else {
+    onAddSession(sessionData);
+  }
     setIsModalOpen(false);
+    setEditingSession(null);
     setTitle('');
+    
     setNotes('');
   };
 
@@ -71,11 +107,14 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingSession(null);
+            setIsModalOpen(true);
+          }}
           className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
         >
           <Plus className="w-3.5 h-3.5 stroke-[3]" />
-          <span>Zaplanuj Sesję</span>
+          <span>{editingSession ? 'Edytuj sesję' : 'Nowa sesja'}</span>
         </button>
       </div>
 
@@ -182,26 +221,55 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
               </div>
 
               {/* Status Action Buttons */}
-              <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs">
-                {session.status === 'planned' && (
-                  <button
-                    onClick={() => onUpdateSessionStatus(session.id, 'in_progress')}
-                    className="w-full bg-[#ff4d00] hover:bg-[#e04400] text-white py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
-                  >
-                    <Play className="w-3 h-3" />
-                    <span>Rozpocznij Nakręcanie</span>
-                  </button>
-                )}
 
-                {session.status === 'in_progress' && (
-                  <button
-                    onClick={() => onUpdateSessionStatus(session.id, 'completed')}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
-                  >
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Zakończ & Oznacz Sektor</span>
-                  </button>
-                )}
+<button
+  onClick={() => {
+    setEditingSession(session);
+    setTitle(session.title);
+    setSectorId(session.sectorId);
+    setScheduledDate(session.scheduledDate);
+    setLeadSetterId(session.leadSetterId);
+    setTargetRouteCount(session.targetRouteCount);
+    setNotes(session.notes || '');
+    setTargetGradeBreakdown(session.targetGradeBreakdown);
+    setIsModalOpen(true);
+  }}
+  className="px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+>
+  Edytuj
+</button>
+
+<div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs">
+  {session.status === 'planned' && (
+    <button
+      onClick={() =>
+        onUpdateSessionStatus(session.id, 'in_progress')
+      }
+      className="w-full bg-[#ff4d00] hover:bg-[#e04400] text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
+    >
+      Zacznij nakręcanie
+    </button>
+  )}
+
+  {session.status === 'in_progress' && (
+    <button
+      onClick={() =>
+        onUpdateSessionStatus(session.id, 'completed')
+      }
+      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
+    >
+      <CheckCircle className="w-3 h-3" />
+      <span>Zakończ Sesję</span>
+    </button>
+  )}
+
+  {session.status === 'completed' && (
+    <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
+      ✓ Sesja zakończona
+    </span>
+  )}
+</div>
+ 
 
                 {session.status === 'completed' && (
                   <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
@@ -209,7 +277,7 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
                   </span>
                 )}
               </div>
-            </div>
+             
           );
         })}
       </div>
@@ -299,7 +367,34 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
                   />
                 </div>
               </div>
+              <div>
+  <label className="block text-zinc-700 font-semibold mb-2">
+    Planowany rozkład wycen
+  </label>
 
+  <div className="grid grid-cols-4 gap-2">
+    {['6A', '6B', '6C', '7A'].map((grade) => (
+      <div key={grade}>
+        <label className="block text-xs text-zinc-500 mb-1">
+          {grade}
+        </label>
+
+        <input
+          type="number"
+          min="0"
+          value={targetGradeBreakdown[grade] ?? 0}
+          onChange={(e) =>
+            setTargetGradeBreakdown((prev) => ({
+              ...prev,
+              [grade]: Number(e.target.value),
+            }))
+          }
+          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
+        />
+            </div>
+        ))}
+        </div>
+      </div>
               <div>
                 <label className="block text-zinc-700 font-semibold mb-1">Wytyczne & Notatki</label>
                 <textarea
@@ -323,7 +418,7 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
                   type="submit"
                   className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs"
                 >
-                  Utwórz Sesję
+                  {editingSession ? 'Zapisz zmiany' : 'Utwórz sesję'}
                 </button>
               </div>
             </form>

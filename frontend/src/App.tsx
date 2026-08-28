@@ -16,7 +16,7 @@ import {
   apiFetchRoutes,
   apiCreateRoute,
   apiUpdateRoute,
-   
+  apiUpdateRouteStatus,
   apiRetireRoute,
   apiFetchSectors,
   apiCreateSector,
@@ -25,6 +25,7 @@ import {
   apiFetchSessions,
   apiCreateSession,
   apiUpdateSessionStatus,
+  apiUpdateSession,
   apiFetchTasks,
   apiCreateTask,
   apiUpdateTaskStatus,
@@ -312,6 +313,25 @@ const handleUpdateRoute = async (
     )
   );
 };
+  const handleUpdateSession = async (
+  id: string,
+  updates: Partial<SettingSession>
+) => {
+  const updated = await apiUpdateSession(id, updates);
+
+  if (!updated) {
+    alert('Nie udało się zaktualizować sesji.');
+    return;
+  }
+
+  setSessions((prev) =>
+    prev.map((session) =>
+      session.id === id ? updated : session
+    )
+  );
+};
+
+
 
   const handleAddTask = async (
   newTaskData: Omit<SetterTask, 'id' | 'createdAt'>
@@ -519,6 +539,7 @@ setTasks((prev) =>
               setters={setters}
               onAddSession={handleAddSession}
               onUpdateSessionStatus={handleUpdateSessionStatus}
+              onUpdateSession={handleUpdateSession}
             />
           )}
 
