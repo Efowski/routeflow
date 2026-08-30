@@ -455,8 +455,7 @@ export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTa
     setter: task.setterId,
     target_grade: task.targetGrade || '6A',
     hold_color: task.holdColor || 'red',
-    sector: task.sectorId,
-    sector_name: task.sectorName || 'Sektor Główny',
+     
     route_type: task.type,
     status: task.status || 'todo',
     description: task.description || '',
