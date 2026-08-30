@@ -21,6 +21,7 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
 }) => {
   const [selectedSetterFilter, setSelectedSetterFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
+  const [selectedSessionFilter, setSelectedSessionFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // New task form state
@@ -33,11 +34,21 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
   const [holdColor, setHoldColor] = useState<HoldColor>('blue');
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const filteredTasks = tasks.filter((t) => {
-    const matchesSetter = selectedSetterFilter === 'all' || t.setterId === selectedSetterFilter;
-    const matchesStatus = selectedStatusFilter === 'all' || t.status === selectedStatusFilter;
-    return matchesSetter && matchesStatus;
-  });
+ const filteredTasks = tasks.filter((t) => {
+  const matchesSetter =
+    selectedSetterFilter === 'all' ||
+    t.setterId === selectedSetterFilter;
+
+  const matchesStatus =
+    selectedStatusFilter === 'all' ||
+    t.status === selectedStatusFilter;
+
+  const matchesSession =
+    selectedSessionFilter === 'all' ||
+    t.sessionId === selectedSessionFilter;
+
+  return matchesSetter && matchesStatus && matchesSession;
+});
 
   const handleSubmitNewTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +187,26 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
             <option value="done">Ukończone</option>
           </select>
         </div>
+        <div className="flex items-center space-x-2">
+  <span className="text-zinc-400 font-mono text-[10px] uppercase">
+    Sesja:
+  </span>
+
+  <select
+    value={selectedSessionFilter}
+    onChange={(e) => setSelectedSessionFilter(e.target.value)}
+    className="bg-zinc-50 border border-zinc-200/80 rounded-lg px-2.5 py-1 text-zinc-800 text-xs font-medium focus:outline-none focus:border-[#ff4d00]"
+  >
+    <option value="all">Wszystkie sesje</option>
+
+    {sessions.map((session) => (
+      <option key={session.id} value={session.id}>
+        {session.title}
+      </option>
+    ))}
+  </select>
+</div>
+
 
         <div className="text-zinc-500 text-xs font-mono">
           Łącznie: <strong className="text-zinc-950">{filteredTasks.length}</strong> zadań
@@ -196,8 +227,19 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-zinc-950">{task.title}</h3>
-                <p className="text-[11px] text-zinc-500 font-medium">{task.sectorName}</p>
+                <h3 className="text-sm font-bold text-zinc-950">
+                  {task.title}
+                </h3>
+
+                <p className="text-[11px] text-zinc-500 font-medium">
+                  {task.sectorName}
+                </p>
+
+                <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                  Sesja:{' '}
+                  {sessions.find((session) => session.id === task.sessionId)?.title ||
+                    'Brak sesji'}
+                </p>
               </div>
 
               {/* Specifications Box */}

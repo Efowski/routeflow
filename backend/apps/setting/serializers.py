@@ -45,6 +45,21 @@ class SetterTaskSerializer(serializers.ModelSerializer):
                     })
     
             return attrs
+
+    def create(self, validated_data):
+        session = validated_data['session']
+        validated_data['sector'] = session.sector
+        validated_data['sector_name'] = session.sector.name
+
+        return super().create(validated_data)
+
+
+    def update(self, instance, validated_data):
+        session = validated_data.get('session', instance.session)
+        validated_data['sector'] = session.sector
+        validated_data['sector_name'] = session.sector.name
+
+        return super().update(instance, validated_data)
         
 
 class SettingSessionSerializer(serializers.ModelSerializer):
