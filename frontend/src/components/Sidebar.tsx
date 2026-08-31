@@ -20,6 +20,7 @@ import { UserAccount } from './AuthLanding';
 export type TabType =
   | 'dashboard'
   | 'routes'
+  | 'aging'
   | 'history'
   | 'planner'
   | 'setters'
