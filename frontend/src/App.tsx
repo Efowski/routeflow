@@ -483,8 +483,7 @@ setTasks((prev) =>
       <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-x-hidden">
         {/* Top Header */}
         <Header
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+           
           onNewRouteClick={() => setActiveTab('routes')}
           onOpenPlanningClick={() => setActiveTab('planner')}
           searchQuery={searchQuery}
@@ -498,15 +497,15 @@ setTasks((prev) =>
           {activeTab === 'dashboard' && (
             <DashboardOverview
               routes={routes}
-              sectors={sectors}
+               
               setters={setters}
               sessions={sessions}
               tasks={tasks}
-              logs={logs}
+              
               onNewRouteClick={() => setActiveTab('routes')}
               onOpenPlanningClick={() => setActiveTab('planner')}
               onNavigateToTab={(tab) => setActiveTab(tab)}
-              onLoadDemoData={handleLoadDemoData}
+              
             />
           )}
 
