@@ -1,32 +1,47 @@
 import React, { useState } from 'react';
-import { ResetHistoryLog, Sector, Setter } from '../types';
+import {
+  ResetHistoryLog,
+   
+  SettingSession,
+} from '../types';
 import { Layers, Calendar, User, Trash2, Plus, Sparkles, CheckCircle2, History } from 'lucide-react';
 
 interface ResetHistoryProps {
   logs: ResetHistoryLog[];
-  sectors: Sector[];
-  setters: Setter[];
+   
+  sessions: SettingSession[];
   onAddLog: (newLog: Omit<ResetHistoryLog, 'id'>) => void;
 }
 
-export const ResetHistory: React.FC<ResetHistoryProps> = ({ logs, sectors, setters, onAddLog }) => {
+export const ResetHistory: React.FC<ResetHistoryProps> = ({
+  logs,
+  
+  sessions,
+  onAddLog,}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sectorName, setSectorName] = useState(sectors[0]?.name || '');
-  const [leadSetterName, setLeadSetterName] = useState(setters[0]?.name || '');
+  const [sectorName, setSectorName] = useState('');
+  const [leadSetterName, setLeadSetterName] = useState('');
+  const [sessionId, setSessionId] = useState(sessions[0]?.id || '');
   const [routesStripped, setRoutesStripped] = useState(15);
   const [routesSet, setRoutesSet] = useState(16);
   const [notes, setNotes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!sessionId) {
+    alert('Wybierz Setting Session.');
+    return;
+    }
     onAddLog({
-      date: new Date().toISOString().split('T')[0],
-      sectorName,
-      leadSetterName,
-      routesStripped: Number(routesStripped),
-      routesSet: Number(routesSet),
-      notes,
-    });
+    sessionId,
+    date: new Date().toISOString().split('T')[0],
+    sectorName,
+    leadSetterName,
+    routesStripped: Number(routesStripped),
+    routesSet: Number(routesSet),
+    notes,
+  });
     setIsModalOpen(false);
     setNotes('');
   };
@@ -153,33 +168,54 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({ logs, sectors, sette
 
             <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
+                <div>
+  <label className="block text-zinc-700 font-semibold mb-1">
+    Setting Session *
+  </label>
+
+  <select
+    value={sessionId}
+    onChange={(e) => {
+      const selectedSessionId = e.target.value;
+      setSessionId(selectedSessionId);
+
+      const selectedSession = sessions.find(
+        (session) => session.id === selectedSessionId
+      );
+
+      if (selectedSession) {
+        setSectorName(selectedSession.sectorName);
+        setLeadSetterName(selectedSession.leadSetterName);
+      }
+    }}
+    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+  >
+    {sessions.map((session) => (
+      <option key={session.id} value={session.id}>
+        {session.title} — {session.sectorName}
+      </option>
+    ))}
+  </select>
+</div>
                 <label className="block text-zinc-700 font-semibold mb-1">Sektor *</label>
-                <select
-                  value={sectorName}
-                  onChange={(e) => setSectorName(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                >
-                  {sectors.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+               <input
+              type="text"
+              value={sectorName}
+              readOnly
+              className="w-full bg-zinc-100 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 cursor-not-allowed"
+/>
               </div>
 
               <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Kierownik Nakręcania (Lead Setter) *</label>
-                <select
+                <label className="block text-zinc-700 font-semibold mb-1">
+                  Kierownik Nakręcania (Lead Setter)
+                </label>
+                <input
+                  type="text"
                   value={leadSetterName}
-                  onChange={(e) => setLeadSetterName(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                >
-                  {setters.map((set) => (
-                    <option key={set.id} value={set.name}>
-                      {set.name} ({set.role})
-                    </option>
-                  ))}
-                </select>
+                  readOnly
+                  className="w-full bg-zinc-100 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 cursor-not-allowed"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">

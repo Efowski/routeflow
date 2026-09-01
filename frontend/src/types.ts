@@ -87,6 +87,7 @@ export interface SetterTask {
 
 export interface ResetHistoryLog {
   id: string;
+  sessionId: string;
   date: string;
   sectorName: string;
   leadSetterName: string;

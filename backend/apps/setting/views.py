@@ -103,5 +103,8 @@ class ResetHistoryLogViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        return ResetHistoryLog.objects.filter(session__sector__gym=user.gym).select_related('session__sector') 
+        return ResetHistoryLog.objects.filter(session__sector__gym=user.gym).select_related(
+    'session__sector',
+    'session__lead_setter__user',
+)
 

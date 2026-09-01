@@ -553,7 +553,7 @@ const handleAddSector = async (newSectorData: {
           )}
 
           {activeTab === 'history' && (
-            <ResetHistory logs={logs} sectors={sectors} setters={setters} onAddLog={handleAddLog} />
+            <ResetHistory logs={logs}  sessions={sessions} onAddLog={handleAddLog} />
           )}
 
           {activeTab === 'analytics' && (
