@@ -26,18 +26,21 @@ async function request<T>(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
+  let errorData: unknown = null;
 
-      console.warn(
-        `API Error [${response.status}] for ${endpoint}`,
-        errorData
-      );
+  try {
+    errorData = await response.json();
+  } catch {
+    errorData = await response.text();
+  }
 
-      throw {
-        status: response.status,
-        data: errorData,
-      };
-    }
+  console.error(
+    `API Error [${response.status}] for ${endpoint}:`,
+    JSON.stringify(errorData, null, 2)
+  );
+
+  return null;
+}
 
     if (response.status === 204) {
       return {} as T;
@@ -91,29 +94,31 @@ export function apiLogout() {
 // --- SECTORS API ---
 export async function apiFetchSectors(): Promise<Sector[]> {
   const data = await request<any[]>('/gyms/sectors/');
+
   if (!data || !Array.isArray(data)) return [];
 
   return data.map((item) => ({
     id: String(item.id),
-    name: item.name || 'Sektor',
-    type: item.sector_type || 'bouldering',
-    maxCapacity: item.max_capacity || 20,
-    currentRouteCount: item.active_routes_count || 0,
-    lastResetDate: item.last_reset_date || new Date().toISOString().split('T')[0],
-    nextScheduledReset: item.next_scheduled_reset || new Date().toISOString().split('T')[0],
-    colorCode: item.color_code || '#3b82f6',
+    name: item.name || '',
+    type: item.sector_type || '',
+    maxCapacity: item.max_capacity ?? 0,
+    currentRouteCount: item.active_routes_count ?? 0,
+    lastResetDate: item.last_reset_date || '',
+    nextScheduledReset: item.next_scheduled_reset || '',
+    colorCode: item.color_code || '',
   }));
 }
 
-export async function apiCreateSector(sector: Partial<Sector>): Promise<Sector | null> {
+export async function apiCreateSector(
+  sector: Partial<Sector>
+): Promise<Sector | null> {
   const payload = {
     name: sector.name,
-    sector_type: sector.type || 'bouldering',
-    max_capacity: sector.maxCapacity || 20,
-    color_code: sector.colorCode || '#3b82f6',
+    sector_type: sector.type,
+    max_capacity: sector.maxCapacity,
+    color_code: sector.colorCode,
     last_reset_date: sector.lastResetDate,
     next_scheduled_reset: sector.nextScheduledReset,
-    
   };
 
   const created = await request<any>('/gyms/sectors/', {
@@ -125,13 +130,13 @@ export async function apiCreateSector(sector: Partial<Sector>): Promise<Sector |
 
   return {
     id: String(created.id),
-    name: created.name,
-    type: created.sector_type,
-    maxCapacity: created.max_capacity,
-    currentRouteCount: created.active_routes_count || 0,
-    lastResetDate: created.last_reset_date || new Date().toISOString().split('T')[0],
-    nextScheduledReset: created.next_scheduled_reset || new Date().toISOString().split('T')[0],
-    colorCode: created.color_code,
+    name: created.name || '',
+    type: created.sector_type || '',
+    maxCapacity: created.max_capacity ?? 0,
+    currentRouteCount: created.active_routes_count ?? 0,
+    lastResetDate: created.last_reset_date || '',
+    nextScheduledReset: created.next_scheduled_reset || '',
+    colorCode: created.color_code || '',
   };
 }
 
@@ -156,7 +161,7 @@ const colorHexMap: Record<string, string> = {
 };
 
 function mapApiRoute(r: any): RouteItem {
-  const holdColor = r.hold_color || 'red';
+  const holdColor = r.hold_color || '';
 
   return {
     id: String(r.id),
@@ -191,18 +196,21 @@ export async function apiFetchRoutes(): Promise<RouteItem[]> {
   return data.map(mapApiRoute);
 }
 
-export async function apiCreateRoute(route: Partial<RouteItem>): Promise<RouteItem | null> {
+export async function apiCreateRoute(
+  route: Partial<RouteItem>
+): Promise<RouteItem | null> {
   const payload = {
     name: route.name,
-    route_type: route.type === 'boulder' ? 'boulder' : 'rope',
-    grade: route.grade || '6A',
-    v_grade: route.vGrade || 'V2',
+    route_type: route.type,
+    grade: route.grade,
+    v_grade: route.vGrade,
     sector: route.sectorId,
-    wall_line_number: route.wallLineNumber || 1,
-    hold_color: route.holdColor || 'red',
+    wall_line_number: route.wallLineNumber,
+    hold_color: route.holdColor,
     setter: route.setterId || null,
-    setter_name: route.setterName || 'Główny Setter',
-    date_set: route.dateSet || new Date().toISOString().split('T')[0],
+    setter_name: route.setterName || '',
+    date_set:
+      route.dateSet || new Date().toISOString().split('T')[0],
     status: route.status || 'active',
     description: route.description || '',
   };
@@ -246,15 +254,7 @@ export async function apiUpdateRoute(
   return mapApiRoute(updated);
 }
 
-
-export async function apiUpdateRouteStatus(id: string, status: string): Promise<boolean> {
-  const res = await request<any>(`/routes/routes/${id}/`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status }),
-  });
-  return res !== null;
-}
-
+ 
 
 export async function apiRetireRoute(id: string): Promise<boolean> {
   const res = await request<any>(`/routes/routes/${id}/retire/`, {
@@ -272,18 +272,21 @@ export async function apiDeleteRoute(id: string): Promise<boolean> {
 // --- SETTERS API ---
 export async function apiFetchSetters(): Promise<Setter[]> {
   const data = await request<any[]>('/setting/setters/');
+
   if (!data || !Array.isArray(data)) return [];
 
   return data.map((s) => ({
     id: String(s.id),
-    name: s.full_name || 'Setter',
-    role: s.role || 'Route Setter',
-    avatar: s.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    specialties: s.specialties ? s.specialties.split(',') : ['Baldery'],
+    name: s.full_name || '',
+    role: s.role || '',
+    avatar: s.avatar_url || '',
+    specialties: s.specialties
+      ? s.specialties.split(',')
+      : [],
     assignedTasksCount: 0,
     completedTasksCount: 0,
     totalRoutesSet: 0,
-    email: '',
+    email: s.email || '',
   }));
 }
 
@@ -296,7 +299,7 @@ export async function apiCreateSetter(setter: {
   const payload = {
     full_name: setter.name,
     email: setter.email,
-    role: setter.role || 'Route Setter',
+    role: setter.role,
     specialties: setter.specialties.join(','),
   };
 
@@ -309,50 +312,49 @@ export async function apiCreateSetter(setter: {
 
   return {
     id: String(created.id),
-    name: created.full_name || setter.name,
-    role: created.role || setter.role,
-    avatar: created.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-    specialties: created.specialties ? created.specialties.split(',') : setter.specialties,
+    name: created.full_name || '',
+    role: created.role || '',
+    avatar: created.avatar_url || '',
+    specialties: created.specialties
+      ? created.specialties.split(',')
+      : [],
     assignedTasksCount: 0,
     completedTasksCount: 0,
     totalRoutesSet: 0,
-    email: setter.email,
+    email: created.email || '',
   };
 }
 
 // --- SETTING SESSIONS API ---
 export async function apiFetchSessions(): Promise<SettingSession[]> {
   const data = await request<any[]>('/setting/sessions/');
+
   if (!data || !Array.isArray(data)) return [];
 
   return data.map((sess) => ({
     id: String(sess.id),
     title: sess.title,
     sectorId: String(sess.sector || ''),
-    sectorName: sess.sector_name || 'Sektor',
+    sectorName: sess.sector_name || '',
     scheduledDate: sess.scheduled_date,
-    status: sess.status || 'planned',
+    status: sess.status,
     leadSetterId: String(sess.lead_setter || ''),
-    leadSetterName: sess.lead_setter_name || 'Szef Resetu',
+    leadSetterName: sess.lead_setter_name || '',
     assignedSetterIds: [],
-     
     targetRouteCount: sess.target_route_count ?? 0,
     targetGradeBreakdown: sess.target_grade_breakdown || {},
     notes: sess.notes || '',
-    
   }));
 }
 
 export async function apiCreateSession(
   session: Partial<SettingSession>
 ): Promise<SettingSession | null> {
-
   const payload = {
     title: session.title,
     sector: session.sectorId,
-    scheduled_date:
-      session.scheduledDate || new Date().toISOString().split('T')[0],
-    status: session.status || 'planned',
+    scheduled_date: session.scheduledDate,
+    status: session.status,
     lead_setter: session.leadSetterId || null,
     notes: session.notes || '',
     target_route_count: session.targetRouteCount,
@@ -369,16 +371,16 @@ export async function apiCreateSession(
   return {
     id: String(created.id),
     title: created.title,
-    sectorId: String(created.sector),
-    sectorName: created.sector_name || session.sectorName || 'Sektor',
+    sectorId: String(created.sector || ''),
+    sectorName: created.sector_name || '',
     scheduledDate: created.scheduled_date,
     status: created.status,
     leadSetterId: String(created.lead_setter || ''),
-    leadSetterName: created.lead_setter_name || 'Head Setter',
+    leadSetterName: created.lead_setter_name || '',
     assignedSetterIds: [],
-    targetRouteCount: 0,
-    notes: created.notes,
-    targetGradeBreakdown: {},
+    targetRouteCount: created.target_route_count ?? 0,
+    notes: created.notes || '',
+    targetGradeBreakdown: created.target_grade_breakdown || {},
   };
 }
 
@@ -446,20 +448,19 @@ export async function apiPublishTask(
 }
 
 
-
-
-export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTask | null> {
+export async function apiCreateTask(
+  task: Partial<SetterTask>
+): Promise<SetterTask | null> {
   const payload = {
     title: task.title,
     session: task.sessionId,
     setter: task.setterId,
-    target_grade: task.targetGrade || '6A',
-    hold_color: task.holdColor || 'red',
-     
+    target_grade: task.targetGrade,
+    hold_color: task.holdColor,
     route_type: task.type,
-    status: task.status || 'todo',
+    status: task.status,
     description: task.description || '',
-    due_date: task.dueDate || new Date().toISOString().split('T')[0],
+    due_date: task.dueDate,
   };
 
   const created = await request<any>('/setting/tasks/', {
@@ -473,19 +474,20 @@ export async function apiCreateTask(task: Partial<SetterTask>): Promise<SetterTa
     id: String(created.id),
     sessionId: String(created.session || ''),
     setterId: String(created.setter || ''),
-    setterName: created.setter_name || task.setterName || 'Setter',
+    setterName: created.setter_name || '',
     title: created.title,
-    description: created.description,
-    type: task.type || 'boulder',
+    description: created.description || '',
+    type: created.route_type,
     sectorId: String(created.sector || ''),
-    sectorName: created.sector_name,
+    sectorName: created.sector_name || '',
     targetGrade: created.target_grade,
     holdColor: created.hold_color,
     status: created.status,
-    createdAt: created.created_at || new Date().toISOString().split('T')[0],
-    dueDate: created.due_date || new Date().toISOString().split('T')[0],
+    createdAt: created.created_at || '',
+    dueDate: created.due_date || '',
   };
 }
+
 
 export async function apiUpdateTaskStatus(id: string, status: string): Promise<boolean> {
   const res = await request<any>(`/setting/tasks/${id}/`, {
@@ -501,27 +503,29 @@ export async function apiUpdateTaskStatus(id: string, status: string): Promise<b
 // --- RESET HISTORY LOGS API ---
 export async function apiFetchResetLogs(): Promise<ResetHistoryLog[]> {
   const data = await request<any[]>('/setting/logs/');
+
   if (!data || !Array.isArray(data)) return [];
 
   return data.map((l) => ({
     id: String(l.id),
-    date: l.date || new Date().toISOString().split('T')[0],
-    sectorName: l.sector_name,
-    leadSetterName: l.lead_setter_name,
-    routesStripped: l.routes_stripped,
-    routesSet: l.routes_set,
+    date: l.date || '',
+    sectorName: l.sector_name || '',
+    leadSetterName: l.lead_setter_name || '',
+    routesStripped: l.routes_stripped ?? 0,
+    routesSet: l.routes_set ?? 0,
     notes: l.notes || '',
   }));
 }
 
 export async function apiCreateResetLog(log: Partial<ResetHistoryLog>): Promise<ResetHistoryLog | null> {
   const payload = {
-    sector_name: log.sectorName,
-    lead_setter_name: log.leadSetterName,
-    routes_stripped: log.routesStripped || 0,
-    routes_set: log.routesSet || 0,
-    notes: log.notes || '',
-  };
+  date: log.date,
+  sector_name: log.sectorName,
+  lead_setter_name: log.leadSetterName,
+  routes_stripped: log.routesStripped ?? 0,
+  routes_set: log.routesSet ?? 0,
+  notes: log.notes || '',
+};  
 
   const created = await request<any>('/setting/logs/', {
     method: 'POST',
@@ -579,22 +583,17 @@ export async function apiUpdateSession(
   
 
   return {
-    id: String(updated.id),
-    title: updated.title,
-    sectorId: String(updated.sector || ''),
-    sectorName: updated.sector_name || '',
-    scheduledDate: updated.scheduled_date || '',
-    status: updated.status,
-    leadSetterId: String(updated.lead_setter || ''),
-    leadSetterName: updated.lead_setter_name || '',
-    assignedSetterIds: session.assignedSetterIds || [],
-    targetRouteCount: updated.target_route_count ?? session.targetRouteCount ?? 0,
-
-    notes: updated.notes ?? session.notes ?? '',
-
-  targetGradeBreakdown:
-  updated.target_grade_breakdown ??
-  session.targetGradeBreakdown ??
-  {},   
-  };
+  id: String(updated.id),
+  title: updated.title,
+  sectorId: String(updated.sector || ''),
+  sectorName: updated.sector_name || '',
+  scheduledDate: updated.scheduled_date || '',
+  status: updated.status,
+  leadSetterId: String(updated.lead_setter || ''),
+  leadSetterName: updated.lead_setter_name || '',
+  assignedSetterIds: [],
+  targetRouteCount: updated.target_route_count ?? 0,
+  notes: updated.notes || '',
+  targetGradeBreakdown: updated.target_grade_breakdown || {},
+};
 }

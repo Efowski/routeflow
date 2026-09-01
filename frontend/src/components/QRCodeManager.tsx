@@ -33,7 +33,7 @@ export const QRCodeManager: React.FC<QRCodeManagerProps> = ({
 
   useEffect(() => {
     if (currentRoute) {
-      const targetUrl = `https://vertigym.app/r/${currentRoute.id}`;
+      const targetUrl = `${window.location.origin}/r/${currentRoute.id}`;
       QRCode.toDataURL(targetUrl, { width: 300, margin: 2, color: { dark: '#09090b', light: '#ffffff' } })
         .then((url) => setQrDataUrl(url))
         .catch((err) => console.error(err));

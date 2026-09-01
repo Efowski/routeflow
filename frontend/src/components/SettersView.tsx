@@ -81,27 +81,38 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
             className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-2xs hover:shadow-xs transition flex flex-col justify-between space-y-3.5 group"
           >
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={setter.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                  alt={setter.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-zinc-200/80 shadow-2xs ring-1 ring-zinc-100"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-zinc-950 truncate group-hover:text-[#ff4d00] transition">
-                      {setter.name}
-                    </h3>
-                  </div>
-                  <span className="inline-block px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-zinc-100 text-zinc-700 border border-zinc-200 mt-0.5">
-                    {setter.role}
-                  </span>
-                  <p className="text-[11px] text-zinc-400 mt-1 flex items-center space-x-1 truncate">
-                    <Mail className="w-3 h-3 shrink-0 text-zinc-400" />
-                    <span className="truncate">{setter.email || 'brak@gym.app'}</span>
-                  </p>
-                </div>
-              </div>
+             <div className="flex items-center space-x-3">
+  {setter.avatar ? (
+    <img
+      src={setter.avatar}
+      alt={setter.name}
+      className="w-12 h-12 rounded-xl object-cover border border-zinc-200/80 shadow-2xs ring-1 ring-zinc-100"
+    />
+  ) : (
+    <div className="w-12 h-12 rounded-xl border border-zinc-200/80 shadow-2xs ring-1 ring-zinc-100 flex items-center justify-center">
+      <span className="text-sm font-medium">
+        {setter.name?.charAt(0).toUpperCase() || '?'}
+      </span>
+    </div>
+  )}
+
+  <div className="min-w-0 flex-1">
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-bold text-zinc-950 truncate group-hover:text-[#ff4d00] transition">
+        {setter.name}
+      </h3>
+    </div>
+
+    <span className="inline-block px-1.5 py-0.2 text-[10px] font-mono font-bold rounded bg-zinc-100 text-zinc-700 border border-zinc-200 mt-0.5">
+      {setter.role}
+    </span>
+
+    <p className="text-[11px] text-zinc-400 mt-1 flex items-center space-x-1 truncate">
+      <Mail className="w-3 h-3 shrink-0 text-zinc-400" />
+      <span className="truncate">{setter.email || '—'}</span>
+    </p>
+    </div>
+  </div>
 
               {/* Specialties */}
               <div className="space-y-1">
@@ -121,20 +132,16 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
               </div>
 
               {/* Metrics */}
-              <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-zinc-100 text-center text-xs">
+              <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-zinc-100 text-center text-xs">
                 <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/60">
-                  <span className="text-zinc-400 block text-[9px] font-mono uppercase">Aktywne</span>
-                  <strong className="text-zinc-950 font-mono text-xs">{setter.activeRoutesCount || 6}</strong>
+                  <span className="text-zinc-400 block text-[9px] font-mono uppercase">
+                    Historia
+                  </span>
+                  <strong className="text-zinc-950 font-mono text-xs">
+                    {setter.totalRoutesSet}
+                  </strong>
                 </div>
-                <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/60">
-                  <span className="text-zinc-400 block text-[9px] font-mono uppercase">Historia</span>
-                  <strong className="text-zinc-950 font-mono text-xs">{setter.totalRoutesSet || 42}</strong>
-                </div>
-                <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/60">
-                  <span className="text-zinc-400 block text-[9px] font-mono uppercase">Ocena</span>
-                  <strong className="text-[#ff4d00] font-mono text-xs">★ {setter.averageRating || '4.8'}</strong>
-                </div>
-              </div>
+</div>
             </div>
 
             <button

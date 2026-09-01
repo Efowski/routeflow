@@ -28,7 +28,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ routes, setters, s
       setRoutes.reduce((acc, r) => acc + r.ratingAverage, 0) / (setRoutes.length || 1);
     return {
       name: set.name.split(' ')[0],
-      totalSet: set.totalRoutesSet,
+      totalSet: setRoutes.length,
       avgRating: Number(avgRating.toFixed(1)),
     };
   });
