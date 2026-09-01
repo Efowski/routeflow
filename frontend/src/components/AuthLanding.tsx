@@ -89,23 +89,41 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
             password,
             first_name: firstName,
             last_name: lastName,
-            role: backendRoleMap[role] || 'gym_manager',
-            gym_name: gymName || 'Nowa Ścianka Wspinaczkowa',
+            role: backendRoleMap[role] ,
+            gym_name: gymName  ,
           }),
         });
 
         if (response.ok) {
-          const data = await response.json();
-          setApiSuccessNotice('Konto pomyślnie utworzone w bazie Django!');
-          createdUser = {
-            id: data.id ? String(data.id) : `usr-${Date.now()}`,
-            email: data.email || email,
-            name: `${data.first_name || firstName} ${data.last_name || lastName}`.trim() || fullName,
-            role,
-            gymName: gymName || 'Nowa Ścianka Wspinaczkowa',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-            isNewRegistration: true,
-          };
+        const data = await response.json();
+          const roleMap: Record<string, UserAccount['role']> = {
+        gym_manager: 'Gym Manager',
+        head_setter: 'Head Setter',
+        route_setter: 'Route Setter',
+      };
+
+      const mappedRole = roleMap[data.user.role];
+
+      if (!mappedRole) {
+        throw new Error(`Unsupported user role: ${data.user.role}`);
+      }
+
+  if (!data.id) {
+    throw new Error('Registration response does not contain user ID.');
+  }
+
+  setApiSuccessNotice('Konto pomyślnie utworzone w bazie Django!');
+
+  createdUser = {
+    id: String(data.id),
+    email: data.email || email,
+    name: `${data.first_name || firstName} ${data.last_name || lastName}`.trim() || fullName,
+    role,
+    gymName: gymName || '',
+    avatarUrl: '',
+    isNewRegistration: true,
+  };
+
         } else {
           const errData = await response.json().catch(() => ({}));
           console.warn('Django Register API returned error:', errData);
@@ -118,21 +136,28 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
       const data = await apiLogin(email, password);
 
   if (data?.user) {
-    createdUser = {
-      id: String(data.user.id),
-      email: data.user.email,
-      name: data.user.name || email,
-      role:
-        data.user.role === 'gym_manager'
-          ? 'Gym Manager'
-          : data.user.role === 'head_setter'
-          ? 'Head Setter'
-          : 'Route Setter',
-      gymName: data.user.gym_name || '',
-      avatarUrl: '',
-      isNewRegistration: false,
-    };
-  } else {
+  const roleMap: Record<string, UserAccount['role']> = {
+    gym_manager: 'Gym Manager',
+    head_setter: 'Head Setter',
+    route_setter: 'Route Setter',
+  };
+
+  const mappedRole = roleMap[data.user.role];
+
+  if (!mappedRole) {
+    throw new Error(`Unsupported user role: ${data.user.role}`);
+  }
+
+  createdUser = {
+    id: String(data.user.id),
+    email: data.user.email,
+    name: data.user.name || email,
+    role: mappedRole,
+    gymName: data.user.gym_name || '',
+    avatarUrl: '',
+    isNewRegistration: false,
+  };
+} else {
     setErrorMessage('Nieprawidłowy adres e-mail lub hasło.');
   }
     }
@@ -154,33 +179,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
      
   };
 
-  const handleDemoLogin = (demoRole: 'Gym Manager' | 'Head Setter' | 'Route Setter') => {
-    const demoUser: UserAccount = {
-      id: `demo-${demoRole.toLowerCase().replace(' ', '-')}`,
-      email:
-        demoRole === 'Gym Manager'
-          ? 'admin@vertigym.pl'
-          : demoRole === 'Head Setter'
-          ? 'head.setter@vertigym.pl'
-          : 'setter@vertigym.pl',
-      name:
-        demoRole === 'Gym Manager'
-          ? 'Jan Kowalski (Zarządca)'
-          : demoRole === 'Head Setter'
-          ? 'Anna Nowak (Head Setter)'
-          : 'Michał Wiśniewski (Setter)',
-      role: demoRole,
-      gymName: 'VertiGym Climbing Center',
-      avatarUrl:
-        demoRole === 'Gym Manager'
-          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-          : demoRole === 'Head Setter'
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    };
-
-    onLoginSuccess(demoUser);
-  };
+ 
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-zinc-900 font-sans flex flex-col justify-between antialiased selection:bg-[#ff4d00] selection:text-white relative">
@@ -211,13 +210,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
             >
               {isRegisterMode ? 'Masz konto? Zaloguj się' : 'Rejestracja obiektu'}
             </button>
-            <button
-              onClick={() => handleDemoLogin('Gym Manager')}
-              className="bg-zinc-950 hover:bg-zinc-800 text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer shadow-xs"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#ff4d00]" />
-              <span>Szybkie Demo</span>
-            </button>
+            
           </div>
         </div>
       </header>
@@ -332,29 +325,11 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
               Konta demonstracyjne (Błyskawiczne logowanie):
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleDemoLogin('Gym Manager')}
-                className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 text-xs font-bold text-zinc-800 flex items-center space-x-1.5 transition cursor-pointer"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#ff4d00]"></span>
-                <span>Jan Kowalski (Manager)</span>
-              </button>
+               
 
-              <button
-                onClick={() => handleDemoLogin('Head Setter')}
-                className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 text-xs font-bold text-zinc-800 flex items-center space-x-1.5 transition cursor-pointer"
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span>Anna Nowak (Head Setter)</span>
-              </button>
+               
 
-              <button
-                onClick={() => handleDemoLogin('Route Setter')}
-                className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 text-xs font-bold text-zinc-800 flex items-center space-x-1.5 transition cursor-pointer"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Michał Wiśniewski (Setter)</span>
-              </button>
+              
             </div>
           </div>
 

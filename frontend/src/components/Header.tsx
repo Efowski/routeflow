@@ -53,25 +53,31 @@ export const Header: React.FC<HeaderProps> = ({
         {/* User Account Info Pill */}
         {currentUser && (
           <div className="hidden sm:flex items-center space-x-2 px-2.5 py-1 rounded-lg bg-zinc-50 border border-zinc-200/80">
-            <img
-              src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-              alt={currentUser.name}
-              className="w-5 h-5 rounded-md object-cover ring-1 ring-zinc-300"
-            />
-            <div className="text-left leading-tight">
-              <div className="text-xs font-bold text-zinc-900 truncate max-w-[120px]">
-                {currentUser.name}
-              </div>
-            </div>
+  {currentUser.avatarUrl ? (
+    <img
+      src={currentUser.avatarUrl}
+      alt={currentUser.name}
+      className="w-5 h-5 rounded-md object-cover ring-1 ring-zinc-300"
+    />
+  ) : (
+    <div className="w-5 h-5 rounded-md bg-zinc-100 ring-1 ring-zinc-300 flex items-center justify-center">
+      <span className="text-[9px] font-bold text-zinc-600">
+        {currentUser.name?.charAt(0).toUpperCase() || '?'}
+      </span>
+    </div>
+  )}
 
-            <button
-              onClick={onLogout}
-              className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer ml-0.5"
-              title="Wyloguj"
-            >
-              <LogOut className="w-3 h-3" />
-            </button>
-          </div>
+  <div className="text-left leading-tight">
+    <div className="text-xs font-bold text-zinc-900 truncate max-w-[120px]">
+      {currentUser.name}
+    </div>
+  </div>
+</div>
+        )}
+        {currentUser && (
+        <button onClick={onLogout}>
+          Wyloguj
+        </button>
         )}
 
         {/* Quick ZIP Generator Downloads */}

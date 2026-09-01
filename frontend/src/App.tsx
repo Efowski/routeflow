@@ -1,22 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  INITIAL_ROUTES,
-  INITIAL_SECTORS,
-  INITIAL_SETTERS,
-  INITIAL_SETTING_SESSIONS,
-  INITIAL_SETTER_TASKS,
-  INITIAL_RESET_LOGS,
-  DEMO_ROUTES,
-  DEMO_SECTORS,
-  DEMO_SETTERS,
-} from './data/mockData';
+
 import {
   apiLogout, 
   apiFetchProfile,
   apiFetchRoutes,
   apiCreateRoute,
   apiUpdateRoute,
-  apiUpdateRouteStatus,
+   
   apiRetireRoute,
   apiFetchSectors,
   apiCreateSector,
@@ -152,11 +142,7 @@ export default function App() {
      
   };
 
-  const handleLoadDemoData = () => {
-    setRoutes(DEMO_ROUTES);
-    setSectors(DEMO_SECTORS);
-    setSetters(DEMO_SETTERS);
-  };
+
 
   const handleLogout = () => {
   apiLogout();
@@ -254,13 +240,21 @@ const handleUpdateRoute = async (
   );
 };
 
-  const handleAddLog = async (newLogData: Omit<ResetHistoryLog, 'id'>) => {
+  const handleAddLog = async (
+  newLogData: Omit<ResetHistoryLog, 'id'>
+  ) => {
+  try {
     const created = await apiCreateResetLog(newLogData);
-    const newLog: ResetHistoryLog = created || {
-      ...newLogData,
-      id: `log-${Date.now()}`,
-    };
-    setLogs([newLog, ...logs]);
+
+    if (!created) {
+      throw new Error('Nie udało się utworzyć wpisu historii resetu.');
+    }
+
+    setLogs((prev) => [created, ...prev]);
+  } catch (error) {
+    console.error('Create reset log error:', error);
+    alert('Nie udało się utworzyć wpisu historii resetu.');
+  }
   };
 
   const handleAddSession = async (
@@ -365,10 +359,29 @@ const handleUpdateRoute = async (
   }
 };
 
-  const handleUpdateTaskStatus = async (taskId: string, status: SetterTask['status']) => {
-    await apiUpdateTaskStatus(taskId, status);
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status } : t)));
-  };
+  const handleUpdateTaskStatus = async (
+  taskId: string,
+  status: SetterTask['status']
+) => {
+  try {
+    const success = await apiUpdateTaskStatus(taskId, status);
+
+    if (!success) {
+      throw new Error('Nie udało się zmienić statusu zadania.');
+    }
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, status }
+          : task
+      )
+    );
+  } catch (error) {
+    console.error('Update task status error:', error);
+    alert('Nie udało się zmienić statusu zadania.');
+  }
+};
 
   const handleConvertTaskToRoute = async (task: SetterTask) => {
   if (!task.sectorId) {
@@ -376,28 +389,7 @@ const handleUpdateRoute = async (
   return;
 }
     
-  const newRouteData = {
-    name: task.title,
-    type: task.type,
-    grade: task.targetGrade,
-    sectorId: task.sectorId,
-    sectorName: task.sectorName, 
-    holdColor: task.holdColor,
-    holdColorHex:
-      task.holdColor === 'blue'
-        ? '#3b82f6'
-        : task.holdColor === 'red'
-        ? '#ef4444'
-        : task.holdColor === 'black'
-        ? '#18181b'
-        : '#eab308',
-    setterId: task.setterId,
-    setterName: task.setterName,
-    dateSet: new Date().toISOString().split('T')[0],
-    status: 'active' as const,
-    description: task.description,
-    tags: ['New', 'Fresh Set'],
-  };
+  
 
   
   const published = await apiPublishTask(task.id);
@@ -417,46 +409,45 @@ setTasks((prev) =>
 };
 
 
-  const handleAddSector = async (newSectorData: {
-    name: string;
-    type: 'bouldering' | 'rope_wall' | 'training';
-    maxCapacity: number;
-    colorCode: string;
-  }) => {
+const handleAddSector = async (newSectorData: {
+  name: string;
+  type: 'bouldering' | 'rope_wall' | 'training';
+  maxCapacity: number;
+  colorCode: string;
+}) => {
+  try {
     const created = await apiCreateSector(newSectorData);
-    const newSector: Sector = created || {
-      id: `sec-${Date.now()}`,
-      name: newSectorData.name,
-      type: newSectorData.type,
-      maxCapacity: newSectorData.maxCapacity,
-      currentRouteCount: 0,
-      lastResetDate: new Date().toISOString().split('T')[0],
-      nextScheduledReset: new Date(Date.now() + 45 * 86400000).toISOString().split('T')[0],
-      colorCode: newSectorData.colorCode,
-    };
-    setSectors([...sectors, newSector]);
-  };
+
+    if (!created) {
+      throw new Error('Nie udało się utworzyć sektora.');
+    }
+
+    setSectors((prev) => [...prev, created]);
+  } catch (error) {
+    console.error('Create sector error:', error);
+    alert('Nie udało się utworzyć sektora.');
+  }
+};
 
   const handleAddSetter = async (newSetterData: {
-    name: string;
-    email: string;
-    role: string;
-    specialties: string[];
-  }) => {
+  name: string;
+  email: string;
+  role: string;
+  specialties: string[];
+}) => {
+  try {
     const created = await apiCreateSetter(newSetterData);
-    const newSetter: Setter = created || {
-      id: `set-${Date.now()}`,
-      name: newSetterData.name,
-      email: newSetterData.email,
-      role: newSetterData.role,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      specialties: newSetterData.specialties,
-      assignedTasksCount: 0,
-      completedTasksCount: 0,
-      totalRoutesSet: 0,
-    };
-    setSetters([...setters, newSetter]);
-  };
+
+    if (!created) {
+      throw new Error('Nie udało się utworzyć settera.');
+    }
+
+    setSetters((prev) => [...prev, created]);
+  } catch (error) {
+    console.error('Create setter error:', error);
+    alert('Nie udało się utworzyć settera.');
+  }
+};
 
   const handleSelectRouteForQR = (route: RouteItem) => {
     setSelectedRouteForQR(route);
