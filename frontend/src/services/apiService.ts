@@ -508,6 +508,7 @@ export async function apiFetchResetLogs(): Promise<ResetHistoryLog[]> {
 
   return data.map((l) => ({
     id: String(l.id),
+    sessionId: String(l.session || ''),
     date: l.date || '',
     sectorName: l.sector_name || '',
     leadSetterName: l.lead_setter_name || '',
@@ -519,6 +520,7 @@ export async function apiFetchResetLogs(): Promise<ResetHistoryLog[]> {
 
 export async function apiCreateResetLog(log: Partial<ResetHistoryLog>): Promise<ResetHistoryLog | null> {
   const payload = {
+  session: log.sessionId,
   date: log.date,
   sector_name: log.sectorName,
   lead_setter_name: log.leadSetterName,
@@ -536,6 +538,7 @@ export async function apiCreateResetLog(log: Partial<ResetHistoryLog>): Promise<
 
   return {
     id: String(created.id),
+    sessionId: String(created.session),
     date: created.date,
     sectorName: created.sector_name,
     leadSetterName: created.lead_setter_name,

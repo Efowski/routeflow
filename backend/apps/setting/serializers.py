@@ -136,14 +136,31 @@ class ResetHistoryLogSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def validate(self, attrs):
-        session = attrs.get('session', getattr(self.instance, 'session', None))
-
+        session = attrs.get(
+            'session',
+            getattr(self.instance, 'session', None)
+        )
         request = self.context.get('request')
 
         if request and session:
             if session.sector.gym != request.user.gym:
                 raise serializers.ValidationError({
-                'session': 'Session must belong to your gym.'
-            })
+                    'session': 'Session must belong to your gym.'
+                })
 
         return attrs
+
+    def create(self, validated_data):
+        session = validated_data['session']
+
+        validated_data['sector_name'] = session.sector.name
+
+        if session.lead_setter:
+            user = session.lead_setter.user
+            validated_data['lead_setter_name'] = (
+                user.get_full_name() or user.username
+            )
+        else:
+            validated_data['lead_setter_name'] = ''
+
+        return super().create(validated_data)
