@@ -11,7 +11,8 @@ from .serializers import (
     SetterProfileSerializer,
     SettingSessionSerializer,
     SetterTaskSerializer,
-    ResetHistoryLogSerializer
+    ResetHistoryLogSerializer,
+    SetterWithUserCreateSerializer,
 )
 from apps.routes.models import Route
 from apps.routes.serializers import RouteSerializer
@@ -24,6 +25,32 @@ class SetterProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return SetterProfile.objects.filter(user__gym=self.request.user.gym).select_related('user')
+
+    @action(
+    detail=False,
+    methods=['post'],
+    url_path='create-with-user'
+)
+    def create_with_user(self, request):
+        serializer = SetterWithUserCreateSerializer(
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+
+        setter_profile = serializer.save()
+
+        response_serializer = SetterProfileSerializer(
+            setter_profile,
+            context={'request': request},
+        )
+
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    
 
 class SettingSessionViewSet(viewsets.ModelViewSet):
     

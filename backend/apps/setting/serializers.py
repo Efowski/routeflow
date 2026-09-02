@@ -1,5 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from django.db import transaction
+from apps.accounts.models import CustomUser
 from .models import SetterProfile, SettingSession, SetterTask, ResetHistoryLog
 
 class SetterProfileSerializer(serializers.ModelSerializer):
@@ -17,6 +19,65 @@ class SetterProfileSerializer(serializers.ModelSerializer):
         if request and user.gym != request.user.gym:
             raise serializers.ValidationError('User must belong to your gym.')
         return user
+
+
+class SetterWithUserCreateSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(
+        max_length=150,
+        required=False,
+        allow_blank=True,
+    )
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+    )
+    user_role = serializers.ChoiceField(
+        choices=['head_setter', 'route_setter'],
+    )
+    setter_role = serializers.CharField(max_length=50)
+    specialties = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
+
+    def validate_email(self, email):
+        if CustomUser.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                'User with this email already exists.'
+            )
+        return email
+
+    @transaction.atomic
+    def create(self, validated_data):
+        request = self.context['request']
+
+        email = validated_data['email']
+        first_name = validated_data['first_name']
+        last_name = validated_data.get('last_name', '')
+        password = validated_data['password']
+        user_role = validated_data['user_role']
+        setter_role = validated_data['setter_role']
+        specialties = validated_data.get('specialties', '')
+
+        user = CustomUser.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=user_role,
+            gym=request.user.gym,
+            gym_name=request.user.gym.name if request.user.gym else '',
+        )
+
+        return SetterProfile.objects.create(
+            user=user,
+            role=setter_role,
+            specialties=specialties,
+        )
+
 
 class SetterTaskSerializer(serializers.ModelSerializer):
     setter_name = serializers.CharField(source='setter.user.username', read_only=True)
