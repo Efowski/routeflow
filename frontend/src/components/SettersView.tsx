@@ -6,21 +6,34 @@ interface SettersViewProps {
   setters: Setter[];
   gymUsers: GymUser[];
   onSelectSetter: (setterId: string) => void;
+
   onAddSetter?: (newSetter: {
-  userId: string;
-  name: string;
-  email: string;
-  role: string;
-  specialties: string[];
-}) => void;
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+    specialties: string[];
+  }) => void;
+
+  onAddSetterWithUser?: (newSetter: {
+    name: string;
+    email: string;
+    password: string;
+    userRole: 'route_setter' | 'head_setter';
+    role: string;
+    specialties: string[];
+  }) => void;
 }
 
-export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSetter, onAddSetter, gymUsers, }) => {
+export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSetter, onAddSetter,onAddSetterWithUser, gymUsers, }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Route Setter');
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [accountMode, setAccountMode] = useState<'existing' | 'new'>('existing');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'route_setter' | 'head_setter'>('route_setter');
   const [specialtiesStr, setSpecialtiesStr] = useState('Baldery, Połogi');
 
   const availableGymUsers = gymUsers.filter(
@@ -28,31 +41,59 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
 );
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+
+  const specialties = specialtiesStr
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (accountMode === 'existing') {
     if (availableGymUsers.length === 0) {
-  return;
-}
+      return;
+    }
 
-if (!selectedUserId || !name || !email) {
-  alert('Wybierz konto użytkownika.');
-  return;
-
-} 
+    if (!selectedUserId || !name || !email) {
+      alert('Wybierz konto użytkownika.');
+      return;
+    }
 
     if (onAddSetter) {
       onAddSetter({
-      userId: selectedUserId,
-      name,
-      email,
-      role,
-      specialties: specialtiesStr.split(',').map((s) => s.trim()).filter(Boolean),
-          });
+        userId: selectedUserId,
+        name,
+        email,
+        role,
+        specialties,
+      });
+    }
+  }
+
+  if (accountMode === 'new') {
+    if (!name || !email || !newUserPassword) {
+      alert('Uzupełnij dane nowego użytkownika.');
+      return;
     }
 
-    setIsModalOpen(false);
-    setName('');
-    setEmail('');
-  };
+    if (onAddSetterWithUser) {
+      onAddSetterWithUser({
+        name,
+        email,
+        password: newUserPassword,
+        userRole: newUserRole,
+        role,
+        specialties,
+      });
+    }
+  }
+
+  setIsModalOpen(false);
+  setSelectedUserId('');
+  setName('');
+  setEmail('');
+  setNewUserPassword('');
+  setAccountMode('existing');
+};
  
 
 
@@ -195,107 +236,210 @@ if (!selectedUserId || !name || !email) {
 
             <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
-  <label className="block text-zinc-700 font-semibold mb-1">
-    Konto użytkownika *
-  </label>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Sposób dodania settera
+              </label>
 
-  <select
-    value={selectedUserId}
-    onChange={(e) => {
-      const userId = e.target.value;
-      setSelectedUserId(userId);
-
-      const selectedUser = gymUsers.find(
-        (user) => user.id === userId
-      );
-
-      if (selectedUser) {
-        setName(selectedUser.name);
-        setEmail(selectedUser.email);
-      }
-    }}
-    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-  >
-     <option value="">Wybierz konto użytkownika</option>
-    {availableGymUsers.map((user) => (
-      <option key={user.id} value={user.id}>
-        {user.name || user.email} — {user.email}
-      </option>
-    ))}
-  </select>
-  {availableGymUsers.length === 0 && (
-  <p className="text-[11px] text-zinc-500 mt-1">
-    Wszyscy użytkownicy w tym gym mają już profil settera.
-  </p>
-  )}
-</div>
-
-              <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Imię i Nazwisko *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="np. Piotr Król"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Adres Email *</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="np. piotr@wspinanie.pl"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Rola / Uprawnienia</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="np. Head Setter, Setter, Trainee"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Specjalizacje</label>
-                  <input
-                    type="text"
-                    placeholder="Baldery, Skoki, Zacięcia"
-                    value={specialtiesStr}
-                    onChange={(e) => setSpecialtiesStr(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end space-x-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-700 font-semibold hover:bg-zinc-200 transition"
+                  onClick={() => setAccountMode('existing')}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition border ${
+                    accountMode === 'existing'
+                      ? 'bg-zinc-950 text-white border-zinc-950'
+                      : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                  }`}
                 >
-                  Anuluj
+                  Istniejące konto
                 </button>
+
                 <button
-                  type="submit"
-                  disabled={availableGymUsers.length === 0}
-                  className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={() => setAccountMode('new')}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-bold transition border ${
+                    accountMode === 'new'
+                      ? 'bg-zinc-950 text-white border-zinc-950'
+                      : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+                  }`}
                 >
-                  Zapisz Settera
+                  Utwórz nowe konto
                 </button>
               </div>
-            </form>
+            </div>
+                        {accountMode === 'existing' && (
+            <div>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Konto użytkownika *
+              </label>
+
+              <select
+                value={selectedUserId}
+                onChange={(e) => {
+                  const userId = e.target.value;
+                  setSelectedUserId(userId);
+
+                  const selectedUser = gymUsers.find(
+                    (user) => user.id === userId
+                  );
+
+                  if (selectedUser) {
+                    setName(selectedUser.name);
+                    setEmail(selectedUser.email);
+                  }
+                }}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+              >
+                <option value="">Wybierz konto użytkownika</option>
+
+                {availableGymUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name || user.email} — {user.email}
+                  </option>
+                ))}
+              </select>
+
+              {availableGymUsers.length === 0 && (
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Wszyscy użytkownicy w tym gym mają już profil settera.
+                </p>
+              )}
+            </div>
+                        )}
+          {accountMode === 'new' && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Imię i nazwisko *
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="np. Piotr Król"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Adres email *
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="np. piotr@wspinanie.pl"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Hasło tymczasowe *
+              </label>
+              <input
+                type="password"
+                required
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-zinc-700 font-semibold mb-1">
+                Rola konta *
+              </label>
+              <select
+                value={newUserRole}
+                onChange={(e) =>
+                  setNewUserRole(e.target.value as 'route_setter' | 'head_setter')
+                }
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+              >
+                <option value="route_setter">Route Setter</option>
+                <option value="head_setter">Head Setter</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+                        {accountMode === 'existing' && (
+                    <>
+                      <div>
+                        <label className="block text-zinc-700 font-semibold mb-1">
+                          Imię i Nazwisko *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="np. Piotr Król"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-zinc-700 font-semibold mb-1">
+                          Adres Email *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          placeholder="np. piotr@wspinanie.pl"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-zinc-700 font-semibold mb-1">Rola / Uprawnienia</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="np. Head Setter, Setter, Trainee"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-zinc-700 font-semibold mb-1">Specjalizacje</label>
+                          <input
+                            type="text"
+                            placeholder="Baldery, Skoki, Zacięcia"
+                            value={specialtiesStr}
+                            onChange={(e) => setSpecialtiesStr(e.target.value)}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex items-center justify-end space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsModalOpen(false)}
+                          className="px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-700 font-semibold hover:bg-zinc-200 transition"
+                        >
+                          Anuluj
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={ accountMode === 'existing' &&   availableGymUsers.length === 0}
+                          className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Zapisz Settera
+                        </button>
+                      </div>
+                    </form>
           </div>
         </div>
       )}

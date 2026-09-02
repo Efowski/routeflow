@@ -89,7 +89,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
             password,
             first_name: firstName,
             last_name: lastName,
-            role: backendRoleMap[role] ,
+            role: 'gym_manager' ,
             gym_name: gymName  ,
           }),
         });
@@ -102,23 +102,22 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
         route_setter: 'Route Setter',
       };
 
-      const mappedRole = roleMap[data.user.role];
+      const mappedRole = roleMap[data.role];
 
       if (!mappedRole) {
-        throw new Error(`Unsupported user role: ${data.user.role}`);
+        throw new Error(`Unsupported user role: ${data.role}`);
       }
 
-  if (!data.id) {
-    throw new Error('Registration response does not contain user ID.');
-  }
-
-  setApiSuccessNotice('Konto pomyślnie utworzone w bazie Django!');
+      if (!data.id) {
+        throw new Error('Registration response does not contain user ID.');
+      }
+        setApiSuccessNotice('Konto pomyślnie utworzone w bazie Django!');
 
   createdUser = {
     id: String(data.id),
     email: data.email || email,
     name: `${data.first_name || firstName} ${data.last_name || lastName}`.trim() || fullName,
-    role,
+    role: mappedRole,
     gymName: gymName || '',
     avatarUrl: '',
     isNewRegistration: true,
@@ -126,7 +125,10 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
 
         } else {
           const errData = await response.json().catch(() => ({}));
-          console.warn('Django Register API returned error:', errData);
+          console.warn(
+  'Django Register API returned error:',
+  JSON.stringify(errData, null, 2)
+);
         }
       } catch (err) {
         console.log('Django server not reachable, fallback to browser state mode', err);
@@ -173,8 +175,42 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
   return;
 }
 
-  setIsLoading(false);
-  onLoginSuccess(createdUser);
+  if (isRegisterMode) {
+  const loginData = await apiLogin(email, password);
+
+  if (!loginData?.user) {
+    setIsLoading(false);
+    setErrorMessage('Konto zostało utworzone, ale automatyczne logowanie nie powiodło się.');
+    return;
+  }
+
+  const roleMap: Record<string, UserAccount['role']> = {
+    gym_manager: 'Gym Manager',
+    head_setter: 'Head Setter',
+    route_setter: 'Route Setter',
+  };
+
+  const mappedRole = roleMap[loginData.user.role];
+
+  if (!mappedRole) {
+    setIsLoading(false);
+    setErrorMessage('Nieobsługiwana rola użytkownika.');
+    return;
+  }
+
+  createdUser = {
+    id: String(loginData.user.id),
+    email: loginData.user.email,
+    name: loginData.user.name || email,
+    role: mappedRole,
+    gymName: loginData.user.gym_name || '',
+    avatarUrl: '',
+    isNewRegistration: true,
+  };
+}
+
+setIsLoading(false);
+onLoginSuccess(createdUser);
 
      
   };
@@ -381,28 +417,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-700 mb-1">
-                      Rola w obiekcie
-                    </label>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {(['Gym Manager', 'Head Setter', 'Route Setter'] as const).map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setRole(r)}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition border cursor-pointer text-center ${
-                            role === r
-                              ? 'bg-zinc-950 text-white border-zinc-950 shadow-2xs'
-                              : 'bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-950'
-                          }`}
-                        >
-                          {r === 'Gym Manager' ? 'Manager' : r === 'Head Setter' ? 'Head Setter' : 'Setter'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
+                  
                   <div>
                     <label className="block text-xs font-semibold text-zinc-700 mb-1">
                       Nazwa Obiektu Wspinaczkowego

@@ -14,6 +14,7 @@ import {
   apiCreateSetter,
   apiFetchSessions,
   apiCreateSession,
+  apiCreateSetterWithUser,
   apiUpdateSessionStatus,
   apiUpdateSession,
   apiFetchTasks,
@@ -453,6 +454,28 @@ const handleAddSector = async (newSectorData: {
   }
 };
 
+  const handleAddSetterWithUser = async (newSetterData: {
+  name: string;
+  email: string;
+  password: string;
+  userRole: 'route_setter' | 'head_setter';
+  role: string;
+  specialties: string[];
+}) => {
+  try {
+    const created = await apiCreateSetterWithUser(newSetterData);
+
+    if (!created) {
+      throw new Error('Nie udało się utworzyć użytkownika i settera.');
+    }
+
+    setSetters((prev) => [...prev, created]);
+  } catch (error) {
+    console.error('Create setter with user error:', error);
+    alert('Nie udało się utworzyć użytkownika i settera.');
+  }
+  };
+
   const handleSelectRouteForQR = (route: RouteItem) => {
     setSelectedRouteForQR(route);
     setActiveTab('qrcode');
@@ -553,6 +576,7 @@ const handleAddSector = async (newSectorData: {
               setters={setters}
               onSelectSetter={() => setActiveTab('tasks')}
               onAddSetter={handleAddSetter}
+              onAddSetterWithUser={handleAddSetterWithUser}
               gymUsers={gymUsers}
             />
           )}
