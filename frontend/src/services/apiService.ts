@@ -340,6 +340,56 @@ export async function apiCreateSetter(setter: {
     email: setter.email,
   };
 }
+
+export async function apiCreateSetterWithUser(data: {
+  name: string;
+  email: string;
+  password: string;
+  userRole: 'route_setter' | 'head_setter';
+  role: string;
+  specialties: string[];
+}): Promise<Setter | null> {
+  const nameParts = data.name.trim().split(/\s+/);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ');
+
+  const payload = {
+    email: data.email,
+    first_name: firstName,
+    last_name: lastName,
+    password: data.password,
+    user_role: data.userRole,
+    setter_role: data.role,
+    specialties: data.specialties.join(','),
+  };
+
+  const created = await request<any>(
+    '/setting/setters/create-with-user/',
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!created) return null;
+
+  return {
+    id: String(created.id),
+    userId: String(created.user),
+    name: created.full_name || data.name,
+    role: created.role || data.role,
+    avatar: created.avatar_url || '',
+    specialties: created.specialties
+      ? created.specialties.split(',').map((s: string) => s.trim())
+      : data.specialties,
+    assignedTasksCount: 0,
+    completedTasksCount: 0,
+    totalRoutesSet: 0,
+    email: data.email,
+  };
+}
+
+
 // --- SETTING SESSIONS API ---
 export async function apiFetchSessions(): Promise<SettingSession[]> {
   const data = await request<any[]>('/setting/sessions/');
