@@ -1,37 +1,60 @@
 import React, { useState } from 'react';
-import { Setter } from '../types';
+import { Setter, GymUser } from '../types';
 import { Users, Mail, Plus, Shield, CheckCircle, Flame } from 'lucide-react';
 
 interface SettersViewProps {
   setters: Setter[];
+  gymUsers: GymUser[];
   onSelectSetter: (setterId: string) => void;
-  onAddSetter?: (newSetter: { name: string; email: string; role: string; specialties: string[] }) => void;
+  onAddSetter?: (newSetter: {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  specialties: string[];
+}) => void;
 }
 
-export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSetter, onAddSetter }) => {
+export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSetter, onAddSetter, gymUsers, }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Route Setter');
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [specialtiesStr, setSpecialtiesStr] = useState('Baldery, Połogi');
+
+  const availableGymUsers = gymUsers.filter(
+  (user) => !setters.some((setter) => setter.userId === user.id)
+);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+    if (availableGymUsers.length === 0) {
+  return;
+}
+
+if (!selectedUserId || !name || !email) {
+  alert('Wybierz konto użytkownika.');
+  return;
+
+} 
 
     if (onAddSetter) {
       onAddSetter({
-        name,
-        email,
-        role,
-        specialties: specialtiesStr.split(',').map((s) => s.trim()).filter(Boolean),
-      });
+      userId: selectedUserId,
+      name,
+      email,
+      role,
+      specialties: specialtiesStr.split(',').map((s) => s.trim()).filter(Boolean),
+          });
     }
 
     setIsModalOpen(false);
     setName('');
     setEmail('');
   };
+ 
+
 
   return (
     <div className="space-y-5">
@@ -172,6 +195,42 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
 
             <form onSubmit={handleSubmit} className="space-y-3 text-xs">
               <div>
+  <label className="block text-zinc-700 font-semibold mb-1">
+    Konto użytkownika *
+  </label>
+
+  <select
+    value={selectedUserId}
+    onChange={(e) => {
+      const userId = e.target.value;
+      setSelectedUserId(userId);
+
+      const selectedUser = gymUsers.find(
+        (user) => user.id === userId
+      );
+
+      if (selectedUser) {
+        setName(selectedUser.name);
+        setEmail(selectedUser.email);
+      }
+    }}
+    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
+  >
+     <option value="">Wybierz konto użytkownika</option>
+    {availableGymUsers.map((user) => (
+      <option key={user.id} value={user.id}>
+        {user.name || user.email} — {user.email}
+      </option>
+    ))}
+  </select>
+  {availableGymUsers.length === 0 && (
+  <p className="text-[11px] text-zinc-500 mt-1">
+    Wszyscy użytkownicy w tym gym mają już profil settera.
+  </p>
+  )}
+</div>
+
+              <div>
                 <label className="block text-zinc-700 font-semibold mb-1">Imię i Nazwisko *</label>
                 <input
                   type="text"
@@ -230,7 +289,8 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs"
+                  disabled={availableGymUsers.length === 0}
+                  className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Zapisz Settera
                 </button>

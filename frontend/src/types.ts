@@ -43,6 +43,7 @@ export interface Sector {
 export interface Setter {
   id: string;
   name: string;
+  userId: string;
   role: string;
   avatar: string;
   specialties: string[];
@@ -104,4 +105,12 @@ export interface RouteAscentFeedback {
   stars: number;
   comment: string;
   date: string;
+}
+
+
+export interface GymUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
 }
