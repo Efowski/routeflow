@@ -1,4 +1,4 @@
-import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog } from '../types';
+import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog, GymUser } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
@@ -81,6 +81,20 @@ export async function apiLogin(email: string, password: string) {
     return null;
   }
 }
+
+
+export async function apiFetchGymUsers(): Promise<GymUser[]> {
+  const data = await request<any[]>('/accounts/users/');
+  if (!data || !Array.isArray(data)) return [];
+
+  return data.map((user) => ({
+    id: String(user.id),
+    email: user.email || '',
+    name: user.name || '',
+    role: user.role || '',
+  }));
+}
+
 
 export async function apiFetchProfile() {
   return await request<any>('/accounts/profile/');
@@ -277,6 +291,7 @@ export async function apiFetchSetters(): Promise<Setter[]> {
 
   return data.map((s) => ({
     id: String(s.id),
+    userId: String(s.user),
     name: s.full_name || '',
     role: s.role || '',
     avatar: s.avatar_url || '',
@@ -291,14 +306,14 @@ export async function apiFetchSetters(): Promise<Setter[]> {
 }
 
 export async function apiCreateSetter(setter: {
+  userId: string;
   name: string;
   email: string;
   role: string;
   specialties: string[];
 }): Promise<Setter | null> {
   const payload = {
-    full_name: setter.name,
-    email: setter.email,
+    user: setter.userId,
     role: setter.role,
     specialties: setter.specialties.join(','),
   };
@@ -312,19 +327,19 @@ export async function apiCreateSetter(setter: {
 
   return {
     id: String(created.id),
-    name: created.full_name || '',
-    role: created.role || '',
+    userId: String(created.user),
+    name: created.full_name || setter.name,
+    role: created.role || setter.role,
     avatar: created.avatar_url || '',
     specialties: created.specialties
       ? created.specialties.split(',')
-      : [],
+      : setter.specialties,
     assignedTasksCount: 0,
     completedTasksCount: 0,
     totalRoutesSet: 0,
-    email: created.email || '',
+    email: setter.email,
   };
 }
-
 // --- SETTING SESSIONS API ---
 export async function apiFetchSessions(): Promise<SettingSession[]> {
   const data = await request<any[]>('/setting/sessions/');

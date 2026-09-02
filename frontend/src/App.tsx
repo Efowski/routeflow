@@ -19,12 +19,12 @@ import {
   apiFetchTasks,
   apiCreateTask,
   apiUpdateTaskStatus,
-  
+  apiFetchGymUsers,
   apiFetchResetLogs,
   apiCreateResetLog,
   apiPublishTask,
 } from './services/apiService';
-import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog } from './types';
+import { RouteItem, Sector, Setter, SettingSession, SetterTask, ResetHistoryLog, GymUser } from './types';
 import { Sidebar, TabType } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -53,6 +53,7 @@ export default function App() {
   const [sessions, setSessions] = useState<SettingSession[]>([]);
   const [tasks, setTasks] = useState<SetterTask[]>([]);
   const [logs, setLogs] = useState<ResetHistoryLog[]>([]);
+  const [gymUsers, setGymUsers] = useState<GymUser[]>([]);
 
   const [selectedRouteForQR, setSelectedRouteForQR] = useState<RouteItem | null>(null);
 
@@ -67,6 +68,7 @@ export default function App() {
     const backendSetters = await apiFetchSetters();
     const backendSessions = await apiFetchSessions();
     const backendTasks = await apiFetchTasks();
+    const backendGymUsers = await apiFetchGymUsers();
     const backendLogs = await apiFetchResetLogs();
 
     setRoutes(backendRoutes);
@@ -74,6 +76,7 @@ export default function App() {
     setSetters(backendSetters);
     setSessions(backendSessions);
     setTasks(backendTasks);
+    setGymUsers(backendGymUsers);
     setLogs(backendLogs);
   };
 
@@ -430,6 +433,7 @@ const handleAddSector = async (newSectorData: {
 };
 
   const handleAddSetter = async (newSetterData: {
+  userId: string;
   name: string;
   email: string;
   role: string;
@@ -549,6 +553,7 @@ const handleAddSector = async (newSectorData: {
               setters={setters}
               onSelectSetter={() => setActiveTab('tasks')}
               onAddSetter={handleAddSetter}
+              gymUsers={gymUsers}
             />
           )}
 

@@ -50,6 +50,19 @@ class CurrentUserSerializer(serializers.ModelSerializer):
     def get_gym_name(self, obj):
         return obj.gym.name if obj.gym else ''
 
+
+class GymUserSeralizer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'name', 'role']
+
+    def get_name(self, obj):
+        return obj.get_full_name() or obj.username
+        
+    
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
