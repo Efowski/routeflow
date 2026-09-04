@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { RouteItem, Sector, Setter, RouteType, HoldColor } from '../types';
+import { UserAccount } from './AuthLanding';
 import {
   Search,
   Filter,
@@ -23,6 +24,7 @@ interface RouteDatabaseProps {
   routes: RouteItem[];
   sectors: Sector[];
   setters: Setter[];
+  currentUser: UserAccount | null;
   onSelectRouteForQR: (route: RouteItem) => void;
   onRetireRoute: (routeId: string) => void;
   onAddRoute: (
@@ -41,11 +43,16 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
   routes,
   sectors,
   setters,
+  currentUser,
   onSelectRouteForQR,
   onRetireRoute,
   onAddRoute,
   onUpdateRoute,
 }) => {
+  const canManageRoutes =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<RouteType | 'all'>('all');
   const [selectedSector, setSelectedSector] = useState<string>('all');
@@ -243,13 +250,15 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
             </button>
           </div>
 
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Nowa Droga</span>
-          </button>
+          {canManageRoutes && (
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Nowa Droga</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -494,7 +503,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                     <QrCode className="w-3.5 h-3.5" />
                   </button>
 
-                  {route.status === 'active' && (
+                  {canManageRoutes && route.status === 'active' && (
                     <button
                       onClick={() => onRetireRoute(route.id)}
                       className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 p-1.5 rounded-lg transition cursor-pointer"
@@ -837,12 +846,14 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
     </div>
 
     <div className="flex items-center space-x-2 pt-1">
-      <button
-        onClick={handleStartEditRoute}
-        className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 py-2 rounded-lg font-bold text-xs flex items-center justify-center transition cursor-pointer border border-zinc-200"
-      >
-        Edytuj
-      </button>
+      {canManageRoutes && (
+        <button
+          onClick={handleStartEditRoute}
+          className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 py-2 rounded-lg font-bold text-xs flex items-center justify-center transition cursor-pointer border border-zinc-200"
+        >
+          Edytuj
+        </button>
+      )}
 
       <button
         onClick={() => {
@@ -863,7 +874,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
 )}
 
       {/* Modal: Add New Route */}
-      {isAddModalOpen && (
+      {isAddModalOpen && canManageRoutes && (
         <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-2xl relative space-y-3.5 text-zinc-800">
             <button

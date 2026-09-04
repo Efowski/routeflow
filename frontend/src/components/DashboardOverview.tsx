@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { RouteItem, Setter, SetterTask } from '../types';
+import { UserAccount } from './AuthLanding';
 
 interface DashboardOverviewProps {
   routes: RouteItem[];
@@ -20,6 +21,7 @@ interface DashboardOverviewProps {
   sessions?: any[];
   tasks: SetterTask[];
   logs?: any[];
+  currentUser: UserAccount | null;
   onNewRouteClick: () => void;
   onOpenPlanningClick: () => void;
   onNavigateToTab: (tab: any) => void;
@@ -32,11 +34,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
    setters,
    sessions = [],
    tasks,
+   currentUser,
    onNewRouteClick,
    onOpenPlanningClick,
    onNavigateToTab,
    
 }) => {
+  const canManageRoutes =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
   const activeRoutes = routes.filter((r) => r.status === 'active');
   const now = new Date();
 
@@ -214,13 +220,15 @@ const sessionsMissingTasks = activeSessions
           >
             Harmonogram Resetów
           </button>
-          <button
-            onClick={onNewRouteClick}
-            className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Nowa Droga</span>
-          </button>
+          {canManageRoutes && (
+            <button
+              onClick={onNewRouteClick}
+              className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Nowa Droga</span>
+            </button>
+          )}
         </div>
       </div>
 

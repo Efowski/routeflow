@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   LayoutDashboard,
   Mountain,
@@ -12,9 +13,8 @@ import {
   Clock,
   LogOut,
   Building2,
-  ChevronRight,
-  Activity,
 } from 'lucide-react';
+
 import { UserAccount } from './AuthLanding';
 
 export type TabType =
@@ -46,6 +46,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   onOpenLanding,
 }) => {
+  const isGymManager = currentUser?.role === 'Gym Manager';
+
+  const canViewAnalytics =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
+
   const overviewGroup = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, hotkey: '1' },
     { id: 'routes', label: 'Baza Dróg', icon: Mountain, hotkey: '2' },
@@ -54,13 +60,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const operationsGroup = [
     { id: 'planner', label: 'Planowanie Resetu', icon: Calendar, hotkey: '4' },
-    { id: 'setters', label: 'Zespół Setterów', icon: Users, hotkey: '5' },
-    { id: 'tasks', label: 'Zadania (Kanban)', icon: CheckSquare, badge: activeTasksCount, hotkey: '6' },
+
+    ...(isGymManager
+      ? [
+          {
+            id: 'setters',
+            label: 'Zespół Setterów',
+            icon: Users,
+            hotkey: '5',
+          },
+        ]
+      : []),
+
+    {
+      id: 'tasks',
+      label: 'Zadania (Kanban)',
+      icon: CheckSquare,
+      badge: activeTasksCount,
+      hotkey: '6',
+    },
   ];
 
   const insightGroup = [
-    { id: 'analytics', label: 'Analityka Ocen', icon: BarChart3, hotkey: '7' },
+    ...(canViewAnalytics
+      ? [
+          {
+            id: 'analytics',
+            label: 'Analityka Ocen',
+            icon: BarChart3,
+            hotkey: '7',
+          },
+        ]
+      : []),
+
     { id: 'qrcode', label: 'Etykiety QR', icon: QrCode, hotkey: '8' },
+
     {
       id: 'django',
       label: 'Architektura Django',
@@ -93,9 +127,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center space-x-2.5">
           <Icon
             className={`w-4 h-4 transition-colors ${
-              isActive ? 'text-[#ff4d00]' : 'text-zinc-400 group-hover:text-zinc-700'
+              isActive
+                ? 'text-[#ff4d00]'
+                : 'text-zinc-400 group-hover:text-zinc-700'
             }`}
           />
+
           <span className="tracking-tight">{item.label}</span>
         </div>
 
@@ -148,13 +185,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center font-black shadow-xs shrink-0 border border-zinc-800">
             <Mountain className="w-4 h-4 text-[#ff4d00] stroke-[2.5]" />
           </div>
+
           <div>
             <div className="flex items-center space-x-1.5">
-              <h1 className="font-bold text-sm text-zinc-950 tracking-tight leading-none">Belay Route</h1>
+              <h1 className="font-bold text-sm text-zinc-950 tracking-tight leading-none">
+                Belay Route
+              </h1>
+
               <span className="px-1 py-0.2 rounded text-[9px] font-mono font-bold bg-[#ff4d00]/10 text-[#ff4d00] border border-[#ff4d00]/20">
                 PRO
               </span>
             </div>
+
             <p className="text-[9px] font-mono tracking-widest text-zinc-400 uppercase mt-0.5 font-medium">
               TACTICAL GYM OS
             </p>
@@ -169,7 +211,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <h2 className="px-2.5 text-[9px] font-mono font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
             OGÓLNE
           </h2>
-          <div className="space-y-0.5">{overviewGroup.map(renderNavItem)}</div>
+
+          <div className="space-y-0.5">
+            {overviewGroup.map(renderNavItem)}
+          </div>
         </div>
 
         {/* OPERATIONS */}
@@ -177,7 +222,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <h2 className="px-2.5 text-[9px] font-mono font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
             OPERACJE
           </h2>
-          <div className="space-y-0.5">{operationsGroup.map(renderNavItem)}</div>
+
+          <div className="space-y-0.5">
+            {operationsGroup.map(renderNavItem)}
+          </div>
         </div>
 
         {/* INSIGHT */}
@@ -185,7 +233,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <h2 className="px-2.5 text-[9px] font-mono font-bold uppercase tracking-widest text-zinc-400 mb-1.5">
             ANALIZA & CORE
           </h2>
-          <div className="space-y-0.5">{insightGroup.map(renderNavItem)}</div>
+
+          <div className="space-y-0.5">
+            {insightGroup.map(renderNavItem)}
+          </div>
         </div>
       </nav>
 
@@ -195,10 +246,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="pb-2 border-b border-zinc-200/70">
             <div className="flex items-center space-x-2 text-zinc-900 font-semibold mb-0.5">
               <Building2 className="w-3.5 h-3.5 text-[#ff4d00] shrink-0" />
-              <span className="truncate text-xs font-bold">{currentUser.gymName}</span>
+
+              <span className="truncate text-xs font-bold">
+                {currentUser.gymName}
+              </span>
             </div>
+
             <div className="flex items-center justify-between text-[11px] text-zinc-500">
-              <span className="truncate font-medium">{currentUser.name}</span>
+              <span className="truncate font-medium">
+                {currentUser.name}
+              </span>
+
               <span className="text-[9px] bg-zinc-200 text-zinc-800 border border-zinc-300 px-1 py-0.2 rounded font-mono shrink-0 font-bold">
                 {currentUser.role}
               </span>
@@ -211,6 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>API Engine</span>
           </span>
+
           <span className="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
             CONNECTED
           </span>
@@ -219,6 +278,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {expiredCount > 0 && (
           <div className="text-[10px] text-amber-900 bg-amber-50/80 border border-amber-200/80 px-2 py-1 rounded-md flex items-center space-x-1.5 font-medium">
             <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+
             <span>{expiredCount} dróg do rotacji (&gt;45d)</span>
           </div>
         )}
@@ -234,4 +294,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
-
