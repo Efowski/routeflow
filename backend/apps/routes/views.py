@@ -1,13 +1,16 @@
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Route
 from .serializers import RouteSerializer
+from apps.accounts.permissions import IsGymStaffReadOnly
+
+
 
 class RouteViewSet(viewsets.ModelViewSet):
     
     serializer_class = RouteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymStaffReadOnly]
     filterset_fields = ['sector', 'route_type', 'status', 'grade', 'hold_color']
     search_fields = ['name', 'setter_name', 'description']
     ordering_fields = ['date_set', 'grade', 'name']

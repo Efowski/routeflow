@@ -16,12 +16,14 @@ from .serializers import (
 )
 from apps.routes.models import Route
 from apps.routes.serializers import RouteSerializer
+from apps.accounts.permissions import IsGymStaffReadOnly, IsGymManagerHeadSetterOrOwnTask, IsGymManagerOrHeadSetterReadOnly
+ 
 
 
 class SetterProfileViewSet(viewsets.ModelViewSet):
     
     serializer_class = SetterProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymManagerOrHeadSetterReadOnly]
 
     def get_queryset(self):
         return SetterProfile.objects.filter(user__gym=self.request.user.gym).select_related('user')
@@ -55,18 +57,31 @@ class SetterProfileViewSet(viewsets.ModelViewSet):
 class SettingSessionViewSet(viewsets.ModelViewSet):
     
     serializer_class = SettingSessionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymStaffReadOnly]
     filterset_fields = ['sector', 'status', 'scheduled_date']
 
     def get_queryset(self):
         user = self.request.user
 
-        return SettingSession.objects.filter(sector__gym=user.gym).select_related('sector', 'lead_setter__user')
+        queryset = SettingSession.objects.filter(
+            sector__gym=user.gym
+        ).select_related(
+            'sector',
+            'lead_setter__user',
+        )
+
+        if user.role == 'route_setter':
+            queryset = queryset.filter(
+                tasks__setter__user=user
+            ).distinct()
+
+        return queryset
+
 
 class SetterTaskViewSet(viewsets.ModelViewSet):
      
     serializer_class = SetterTaskSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymManagerHeadSetterOrOwnTask]
     filterset_fields = ['status', 'setter', 'session']
 
 
@@ -117,14 +132,35 @@ class SetterTaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        return SetterTask.objects.filter(session__sector__gym=user.gym).select_related('setter__user', 'session__sector')
+        queryset = SetterTask.objects.filter(
+            session__sector__gym=user.gym
+        ).select_related(
+            'setter__user',
+            'session__sector',
+        )
+
+        if user.role == 'route_setter':
+            queryset = queryset.filter(
+                setter__user=user
+            )
+
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        if request.user.role == 'route_setter':
+            return Response(
+                {'detail': 'Route setters cannot create tasks.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return super().create(request, *args, **kwargs)
 
 
                                                                                        
 class ResetHistoryLogViewSet(viewsets.ModelViewSet):
      
     serializer_class = ResetHistoryLogSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymStaffReadOnly]
     ordering_fields = ['date']
 
     def get_queryset(self):

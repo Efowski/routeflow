@@ -63,22 +63,35 @@ export default function App() {
 
 
   // Fetch initial data from Django REST API backend
-  const loadDataFromBackend = async () => {
+  const loadDataFromBackend = async (user: UserAccount) => {
     const backendRoutes = await apiFetchRoutes();
     const backendSectors = await apiFetchSectors();
-    const backendSetters = await apiFetchSetters();
     const backendSessions = await apiFetchSessions();
     const backendTasks = await apiFetchTasks();
-    const backendGymUsers = await apiFetchGymUsers();
     const backendLogs = await apiFetchResetLogs();
 
     setRoutes(backendRoutes);
     setSectors(backendSectors);
-    setSetters(backendSetters);
     setSessions(backendSessions);
     setTasks(backendTasks);
-    setGymUsers(backendGymUsers);
     setLogs(backendLogs);
+
+    if (
+      user.role === 'Gym Manager' ||
+      user.role === 'Head Setter'
+    ) {
+      const backendSetters = await apiFetchSetters();
+      setSetters(backendSetters);
+    } else {
+      setSetters([]);
+    }
+
+    if (user.role === 'Gym Manager') {
+      const backendGymUsers = await apiFetchGymUsers();
+      setGymUsers(backendGymUsers);
+    } else {
+      setGymUsers([]);
+    }
   };
 
   useEffect(() => {
@@ -120,7 +133,7 @@ export default function App() {
     setCurrentUser(restoredUser);
     setShowAuthLanding(false);
 
-    await loadDataFromBackend();
+    await loadDataFromBackend(restoredUser);
   };
 
   restoreSession();
@@ -141,7 +154,7 @@ export default function App() {
     setCurrentUser(user);
     setShowAuthLanding(false);
     setActiveTab('dashboard');
-    loadDataFromBackend();
+    loadDataFromBackend(user);
 
      
   };
@@ -485,6 +498,9 @@ const handleAddSector = async (newSectorData: {
     return <AuthLanding onLoginSuccess={handleLoginSuccess} />;
   }
 
+  const isGymManager = currentUser.role === 'Gym Manager';
+  const isHeadSetter = currentUser.role === 'Head Setter';
+
   return (
     <div className="min-h-screen bg-[#fafaf9] text-zinc-900 font-sans flex flex-col md:flex-row antialiased">
       {/* Sidebar Navigation */}
@@ -515,7 +531,7 @@ const handleAddSector = async (newSectorData: {
           {activeTab === 'dashboard' && (
             <DashboardOverview
               routes={routes}
-               
+              currentUser={currentUser} 
               setters={setters}
               sessions={sessions}
               tasks={tasks}
@@ -532,6 +548,7 @@ const handleAddSector = async (newSectorData: {
               routes={routes}
               sectors={sectors}
               setters={setters}
+              currentUser={currentUser}
               onSelectRouteForQR={handleSelectRouteForQR}
               onRetireRoute={handleRetireRoute}
               onAddRoute={handleAddRoute}
@@ -554,6 +571,7 @@ const handleAddSector = async (newSectorData: {
               sessions={sessions}
               sectors={sectors}
               setters={setters}
+              currentUser={currentUser}
               onAddSession={handleAddSession}
               onUpdateSessionStatus={handleUpdateSessionStatus}
               onUpdateSession={handleUpdateSession}
@@ -565,13 +583,14 @@ const handleAddSector = async (newSectorData: {
               tasks={tasks}
               setters={setters}
               sessions={sessions}
+              currentUser = {currentUser}
               onAddTask={handleAddTask}
               onUpdateTaskStatus={handleUpdateTaskStatus}
               onConvertTaskToRoute={handleConvertTaskToRoute}
             />
           )}
 
-          {activeTab === 'setters' && (
+          {activeTab === 'setters' && isGymManager && (
             <SettersView
               setters={setters}
               onSelectSetter={() => setActiveTab('tasks')}
@@ -582,10 +601,10 @@ const handleAddSector = async (newSectorData: {
           )}
 
           {activeTab === 'history' && (
-            <ResetHistory logs={logs}  sessions={sessions} onAddLog={handleAddLog} />
+            <ResetHistory logs={logs}  sessions={sessions} currentUser={currentUser} onAddLog={handleAddLog} />
           )}
 
-          {activeTab === 'analytics' && (
+          {activeTab === 'analytics' && (isGymManager || isHeadSetter) && (
             <AnalyticsView routes={routes} setters={setters} sectors={sectors} />
           )}
 

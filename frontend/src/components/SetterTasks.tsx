@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { SetterTask, Setter, SettingSession, HoldColor, RouteType } from '../types';
+import { UserAccount } from './AuthLanding';
 import { CheckSquare, User, Clock, CheckCircle2, Play, Plus, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface SetterTasksProps {
   tasks: SetterTask[];
   setters: Setter[];
   sessions: SettingSession[];
+  currentUser: UserAccount | null;
   onAddTask: (newTask: Omit<SetterTask, 'id' | 'createdAt'>) => void;
   onUpdateTaskStatus: (taskId: string, status: SetterTask['status']) => void;
   onConvertTaskToRoute: (task: SetterTask) => void;
@@ -15,10 +17,15 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
   tasks,
   setters,
   sessions,
+  currentUser,
   onAddTask,
   onUpdateTaskStatus,
   onConvertTaskToRoute,
 }) => {
+  const canCreateTasks =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
+
   const [selectedSetterFilter, setSelectedSetterFilter] = useState<string>('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [selectedSessionFilter, setSelectedSessionFilter] = useState<string>('all');
@@ -130,16 +137,19 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
           </h2>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[3]" />
-          <span>Przydziel Zadanie</span>
-        </button>
+        {canCreateTasks && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>Przydziel Zadanie</span>
+          </button>
+        )}
       </div>
 
       {/* Setters Quick Selector */}
+      {setters.length > 0 && (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {setters.map((setter) => {
           const isSelected = selectedSetterFilter === setter.id;
@@ -170,6 +180,7 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
           );
         })}
       </div>
+      )}
 
       {/* Filter Toolbar */}
       <div className="bg-white border border-zinc-200/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
@@ -317,7 +328,7 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
       </div>
 
       {/* Modal: Add Task */}
-      {isModalOpen && (
+      {isModalOpen && canCreateTasks && (
         <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-2xl relative space-y-3.5 text-zinc-800">
             <button

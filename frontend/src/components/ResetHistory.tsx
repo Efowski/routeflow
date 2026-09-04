@@ -4,12 +4,14 @@ import {
    
   SettingSession,
 } from '../types';
+import { UserAccount } from './AuthLanding';
 import { Layers, Calendar, User, Trash2, Plus, Sparkles, CheckCircle2, History } from 'lucide-react';
 
 interface ResetHistoryProps {
   logs: ResetHistoryLog[];
    
   sessions: SettingSession[];
+  currentUser: UserAccount | null;
   onAddLog: (newLog: Omit<ResetHistoryLog, 'id'>) => void;
 }
 
@@ -17,7 +19,11 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
   logs,
   
   sessions,
+  currentUser,
   onAddLog,}) => {
+  const canManageResetHistory =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sectorName, setSectorName] = useState('');
   const [leadSetterName, setLeadSetterName] = useState('');
@@ -65,13 +71,15 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
           </h2>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[3]" />
-          <span>Zarejestruj Reset</span>
-        </button>
+        {canManageResetHistory && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>Zarejestruj Reset</span>
+          </button>
+        )}
       </div>
 
       {/* Timeline List */}
@@ -151,7 +159,7 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
       </div>
 
       {/* Modal: Add Log */}
-      {isModalOpen && (
+      {isModalOpen && canManageResetHistory && (
         <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-2xl relative space-y-3.5 text-zinc-800">
             <button

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { SettingSession, Sector, Setter } from '../types';
+import { UserAccount } from './AuthLanding';
 import { Calendar, Users, Target, CheckCircle, Clock, Plus, ArrowRight, Play, Sparkles } from 'lucide-react';
 
 interface SettingPlannerProps {
   sessions: SettingSession[];
   sectors: Sector[];
   setters: Setter[];
+  currentUser: UserAccount | null;
   onAddSession: (newSession: Omit<SettingSession, 'id'>) => void;
   onUpdateSessionStatus: (sessionId: string, status: 'planned' | 'in_progress' | 'completed') => void;
   onUpdateSession: (
@@ -18,10 +20,15 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   sessions,
   sectors,
   setters,
+  currentUser,
   onAddSession,
   onUpdateSessionStatus,
   onUpdateSession,
 }) => {
+  const canManageSessions =
+    currentUser?.role === 'Gym Manager' ||
+    currentUser?.role === 'Head Setter';
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [editingSession, setEditingSession] = useState<SettingSession | null>(null);
@@ -106,16 +113,18 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
           </h2>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingSession(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[3]" />
-          <span>{editingSession ? 'Edytuj sesję' : 'Nowa sesja'}</span>
-        </button>
+        {canManageSessions && (
+          <button
+            onClick={() => {
+              setEditingSession(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>{editingSession ? 'Edytuj sesję' : 'Nowa sesja'}</span>
+          </button>
+        )}
       </div>
 
       {/* Grid of Sessions */}
@@ -222,6 +231,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
 
               {/* Status Action Buttons */}
 
+{canManageSessions && (
 <button
   onClick={() => {
     setEditingSession(session);
@@ -238,7 +248,9 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
 >
   Edytuj
 </button>
+)}
 
+{canManageSessions && (
 <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs">
   {session.status === 'planned' && (
     <button
@@ -269,6 +281,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
     </span>
   )}
 </div>
+)}
  
 
                 {session.status === 'completed' && (
@@ -283,7 +296,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
       </div>
 
       {/* Modal: New Session */}
-      {isModalOpen && (
+      {isModalOpen && canManageSessions && (
         <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-2xl relative space-y-3.5 text-zinc-800">
             <button

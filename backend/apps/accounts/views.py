@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from .permissions import IsGymManager
 from .serializers import UserRegisterSerializer, CustomTokenObtainPairSerializer, CurrentUserSerializer, GymUserSeralizer
 
 User = get_user_model()
@@ -11,7 +12,7 @@ class CustomLoginView(TokenObtainPairView):
 
 class GymUserListView(generics.ListAPIView):
     serializer_class = GymUserSeralizer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsGymManager]
 
     def get_queryset(self):
         return User.objects.filter(
