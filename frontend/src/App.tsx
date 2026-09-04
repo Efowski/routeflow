@@ -518,7 +518,7 @@ const handleAddSector = async (newSectorData: {
         {/* Top Header */}
         <Header
            
-          onNewRouteClick={() => setActiveTab('routes')}
+           
           onOpenPlanningClick={() => setActiveTab('planner')}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
