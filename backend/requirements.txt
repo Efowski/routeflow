@@ -10,3 +10,4 @@ dj-rest-auth>=6.0.0
 django-allauth>=0.61.0
 djangorestframework-simplejwt>=5.3.1
 psycopg2-binary>=2.9.9
+gunicorn>=23.0.0
