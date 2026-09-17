@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SetterTask, Setter, SettingSession, HoldColor, RouteType } from '../types';
 import { UserAccount } from './AuthLanding';
-import { CheckSquare, User, Clock, CheckCircle2, Play, Plus, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckSquare, User, Clock, CheckCircle2, Play, Plus, Sparkles, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface SetterTasksProps {
   tasks: SetterTask[];
@@ -234,19 +234,19 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 {getStatusBadge(task.status)}
-                <span className="text-[10px] font-mono text-zinc-400">Termin: {task.dueDate}</span>
+                <span className="text-[11px]font-mono text-zinc-400">Termin: {task.dueDate}</span>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-zinc-950">
+                <h3 className="text-base font-bold text-zinc-950">
                   {task.title}
                 </h3>
 
-                <p className="text-[11px] text-zinc-500 font-medium">
+                <p className="text-xs text-zinc-500 font-medium">
                   {task.sectorName}
                 </p>
 
-                <p className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                <p className="text-[11px]text-zinc-400 font-mono mt-0.5">
                   Sesja:{' '}
                   {sessions.find((session) => session.id === task.sessionId)?.title ||
                     'Brak sesji'}
@@ -255,24 +255,24 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
 
               {/* Specifications Box */}
               <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200/60 text-xs space-y-1.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-zinc-400 font-mono text-[10px] uppercase">Setter:</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-400 font-mono text-[11px]uppercase">Setter:</span>
                   <strong className="text-zinc-900">{task.setterName}</strong>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-zinc-400 font-mono text-[10px] uppercase">Wycena:</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-400 font-mono text-[11px]uppercase">Wycena:</span>
                   <strong className="text-[#ff4d00] font-mono font-black">{task.targetGrade}</strong>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-zinc-400 font-mono text-[10px] uppercase">Kolor:</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-zinc-400 font-mono text-[11px]uppercase">Kolor:</span>
                   <span className="font-bold capitalize text-zinc-800">{task.holdColor}</span>
                 </div>
               </div>
 
               {task.description && (
-                <p className="text-[11px] text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
+                <p className="text-xs text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
                   "{task.description}"
                 </p>
               )}
@@ -280,33 +280,64 @@ export const SetterTasks: React.FC<SetterTasksProps> = ({
 
             {/* Task Controls & Route Generation */}
             <div className="pt-2.5 border-t border-zinc-100 space-y-2 text-xs">
-              <div className="flex items-center space-x-1.5">
-                {task.status === 'todo' && (
-                  <button
-                    onClick={() => onUpdateTaskStatus(task.id, 'in_progress')}
-                    className="flex-1 bg-zinc-100 hover:bg-zinc-200/80 text-zinc-900 py-1.5 rounded-lg font-bold border border-zinc-200 text-xs transition cursor-pointer"
-                  >
-                    Rozpocznij Nakręcanie
-                  </button>
-                )}
-                {task.status === 'in_progress' && (
-                  <button
-                    onClick={() => onUpdateTaskStatus(task.id, 'testing')}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
-                  >
-                    Przekaż do Testów (Forerun)
-                  </button>
-                )}
-                {task.status === 'testing' && (
-                  <button
-                    onClick={() => onUpdateTaskStatus(task.id, 'done')}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
-                  >
-                    Oznacz jako Gotowe
-                  </button>
-                )}
-              </div>
+<div className="flex items-center space-x-1.5">
+  {task.status === 'todo' && (
+    <button
+      onClick={() => onUpdateTaskStatus(task.id, 'in_progress')}
+      className="flex-1 bg-zinc-100 hover:bg-zinc-200/80 text-zinc-900 py-1.5 rounded-lg font-bold border border-zinc-200 text-xs transition cursor-pointer"
+    >
+      Rozpocznij Nakręcanie
+    </button>
+  )}
 
+  {task.status === 'in_progress' && (
+    <>
+      <button
+        onClick={() => onUpdateTaskStatus(task.id, 'todo')}
+        className="px-3 py-1.5 bg-white hover:bg-zinc-100 text-zinc-600 rounded-lg font-bold border border-zinc-200 text-xs transition cursor-pointer flex items-center justify-center"
+        title="Wróć do: Do zrobienia"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+      </button>
+
+      <button
+        onClick={() => onUpdateTaskStatus(task.id, 'testing')}
+        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
+      >
+        Przekaż do Testów (Forerun)
+      </button>
+    </>
+  )}
+
+  {task.status === 'testing' && (
+    <>
+      <button
+        onClick={() => onUpdateTaskStatus(task.id, 'in_progress')}
+        className="px-3 py-1.5 bg-white hover:bg-zinc-100 text-zinc-600 rounded-lg font-bold border border-zinc-200 text-xs transition cursor-pointer flex items-center justify-center"
+        title="Wróć do: W trakcie"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+      </button>
+
+      <button
+        onClick={() => onUpdateTaskStatus(task.id, 'done')}
+        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
+      >
+        Oznacz jako Gotowe
+      </button>
+    </>
+  )}
+
+  {task.status === 'done' && !task.createdRouteId && (
+    <button
+      onClick={() => onUpdateTaskStatus(task.id, 'testing')}
+      className="w-full bg-white hover:bg-zinc-100 text-zinc-600 py-1.5 rounded-lg font-bold border border-zinc-200 text-xs transition cursor-pointer flex items-center justify-center space-x-1.5"
+    >
+      <ArrowLeft className="w-3.5 h-3.5" />
+      <span>Wróć do testów</span>
+    </button>
+  )}
+</div>
               {task.status === 'done' && !task.createdRouteId && (
                 <button
                   onClick={() => onConvertTaskToRoute(task)}

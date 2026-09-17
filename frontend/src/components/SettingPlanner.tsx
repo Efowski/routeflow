@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SettingSession, Sector, Setter } from '../types';
 import { UserAccount } from './AuthLanding';
-import { Calendar, Users, Target, CheckCircle, Clock, Plus, ArrowRight, Play, Sparkles } from 'lucide-react';
+import { Calendar, Users, Target, CheckCircle, Clock, Plus } from 'lucide-react';
 
 interface SettingPlannerProps {
   sessions: SettingSession[];
@@ -9,12 +9,30 @@ interface SettingPlannerProps {
   setters: Setter[];
   currentUser: UserAccount | null;
   onAddSession: (newSession: Omit<SettingSession, 'id'>) => void;
-  onUpdateSessionStatus: (sessionId: string, status: 'planned' | 'in_progress' | 'completed') => void;
+  onUpdateSessionStatus: (
+    sessionId: string,
+    status: 'planned' | 'in_progress' | 'completed'
+  ) => void;
   onUpdateSession: (
-  id: string,
-  updates: Partial<SettingSession>
+    id: string,
+    updates: Partial<SettingSession>
   ) => void;
 }
+
+type GradeRow = {
+  id: string;
+  grade: string;
+  count: number;
+};
+
+const createGradeRow = (
+  grade: string = '',
+  count: number = 0
+): GradeRow => ({
+  id: crypto.randomUUID(),
+  grade,
+  count,
+});
 
 export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   sessions,
@@ -32,14 +50,9 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [editingSession, setEditingSession] = useState<SettingSession | null>(null);
-  const [targetGradeBreakdown, setTargetGradeBreakdown] = useState<
-  Record<string, number>
->({
-  '6A': 0,
-  '6B': 0,
-  '6C': 0,
-  '7A': 0,
-});
+  const [gradeRows, setGradeRows] = useState<GradeRow[]>([
+    createGradeRow('6A', 0),
+  ]);
   const [sectorId, setSectorId] = useState(sectors[0]?.id || '');
   const [scheduledDate, setScheduledDate] = useState('');
   const [leadSetterId, setLeadSetterId] = useState(setters[0]?.id || '');
@@ -49,49 +62,62 @@ export const SettingPlanner: React.FC<SettingPlannerProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !sectorId || !scheduledDate) return;
-     
 
     const sectorObj = sectors.find((s) => s.id === sectorId);
     const leadSetterObj = setters.find((set) => set.id === leadSetterId);
+
+    const targetGradeBreakdown = gradeRows.reduce<Record<string, number>>(
+      (acc, row) => {
+        const grade = row.grade.trim();
+
+        if (grade) {
+          acc[grade] = (acc[grade] ?? 0) + row.count;
+        }
+
+        return acc;
+      },
+      {}
+    );
+
     const totalPlannedRoutes = Object.values(targetGradeBreakdown).reduce(
-  (sum, count) => sum + count,
-  0
-);
+      (sum, count) => sum + count,
+      0
+    );
 
-if (totalPlannedRoutes !== Number(targetRouteCount)) {
-  alert(
-    `Suma dróg w rozkładzie wycen musi wynosić ${targetRouteCount}. Obecnie wynosi ${totalPlannedRoutes}.`
-  );
-  return;
-}
+    if (totalPlannedRoutes !== Number(targetRouteCount)) {
+      alert(
+        `Suma dróg w rozkładzie wycen musi wynosić ${targetRouteCount}. Obecnie wynosi ${totalPlannedRoutes}.`
+      );
+      return;
+    }
 
-   const sessionData = {
-  title,
-  sectorId,
-  sectorName: sectorObj ? sectorObj.name : 'Sector',
-  scheduledDate,
-  status: editingSession ? editingSession.status : 'planned' as const,
-  leadSetterId,
-  leadSetterName: leadSetterObj ? leadSetterObj.name : 'Head Setter',
-  assignedSetterIds: editingSession
-    ? editingSession.assignedSetterIds
-    : [leadSetterId],
-  targetRouteCount: Number(targetRouteCount),
-  notes,
-  targetGradeBreakdown,
-};
+    const sessionData = {
+      title,
+      sectorId,
+      sectorName: sectorObj ? sectorObj.name : 'Sector',
+      scheduledDate,
+      status: editingSession ? editingSession.status : ('planned' as const),
+      leadSetterId,
+      leadSetterName: leadSetterObj ? leadSetterObj.name : 'Head Setter',
+      assignedSetterIds: editingSession
+        ? editingSession.assignedSetterIds
+        : [leadSetterId],
+      targetRouteCount: Number(targetRouteCount),
+      notes,
+      targetGradeBreakdown,
+    };
 
-  
-  if (editingSession) {
-    onUpdateSession(editingSession.id, sessionData);
-  } else {
-    onAddSession(sessionData);
-  }
+    if (editingSession) {
+      onUpdateSession(editingSession.id, sessionData);
+    } else {
+      onAddSession(sessionData);
+    }
+
     setIsModalOpen(false);
     setEditingSession(null);
     setTitle('');
-    
     setNotes('');
+    setGradeRows([createGradeRow('6A', 0)]);
   };
 
   return (
@@ -101,7 +127,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
         <div>
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-[#ff4d00]"></span>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-zinc-400">
               OPERATIONAL SCHEDULING
             </span>
           </div>
@@ -117,6 +143,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
           <button
             onClick={() => {
               setEditingSession(null);
+              setGradeRows([createGradeRow('6A', 0)]);
               setIsModalOpen(true);
             }}
             className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer shrink-0"
@@ -148,7 +175,7 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
                 {/* Header status */}
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded flex items-center space-x-1 ${
+                    className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded flex items-center space-x-1 ${
                       isInProgress
                         ? 'bg-amber-100 text-amber-900 border border-amber-200 animate-pulse'
                         : isCompleted
@@ -174,45 +201,49 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
                     )}
                   </span>
 
-                  <span className="text-[11px] font-mono text-zinc-500">{session.scheduledDate}</span>
+                  <span className="text-xs font-mono text-zinc-500">
+                    {session.scheduledDate}
+                  </span>
                 </div>
 
                 {/* Title & Sector */}
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-950">{session.title}</h3>
-                  <p className="text-[11px] text-zinc-500 font-medium">{session.sectorName}</p>
+                  <h3 className="text-base font-bold text-zinc-950">{session.title}</h3>
+                  <p className="text-xs text-zinc-500 font-medium">{session.sectorName}</p>
                 </div>
 
                 {/* Lead Setter & Team */}
                 <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200/60 text-xs space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-zinc-400 font-mono text-[10px] uppercase flex items-center space-x-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-400 font-mono text-[11px] uppercase flex items-center space-x-1">
                       <Users className="w-3 h-3" />
                       <span>Head Setter:</span>
                     </span>
                     <strong className="text-zinc-900">{session.leadSetterName}</strong>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-zinc-400 font-mono text-[10px] uppercase flex items-center space-x-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-400 font-mono text-[11px] uppercase flex items-center space-x-1">
                       <Target className="w-3 h-3" />
                       <span>Cel ilościowy:</span>
                     </span>
-                    <strong className="text-[#ff4d00] font-mono font-bold">{session.targetRouteCount} dróg</strong>
+                    <strong className="text-[#ff4d00] font-mono font-bold">
+                      {session.targetRouteCount} dróg
+                    </strong>
                   </div>
                 </div>
 
                 {/* Target Grade Breakdown */}
                 {session.targetGradeBreakdown && (
                   <div className="space-y-1">
-                    <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider block">
+                    <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider block">
                       Rozkład Wycen:
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(session.targetGradeBreakdown).map(([gr, count]) => (
                         <span
                           key={gr}
-                          className="bg-zinc-100 border border-zinc-200 text-zinc-800 font-mono font-semibold px-1.5 py-0.2 rounded text-[10px]"
+                          className="bg-zinc-100 border border-zinc-200 text-zinc-800 font-mono font-semibold px-1.5 py-0.2 rounded text-[11px]"
                         >
                           {gr}: <strong className="text-zinc-950">{count}x</strong>
                         </span>
@@ -223,74 +254,73 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
 
                 {/* Notes */}
                 {session.notes && (
-                  <p className="text-[11px] text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
+                  <p className="text-xs text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
                     "{session.notes}"
                   </p>
                 )}
               </div>
 
               {/* Status Action Buttons */}
+              {canManageSessions && (
+                <button
+                  onClick={() => {
+                    setEditingSession(session);
+                    setTitle(session.title);
+                    setSectorId(session.sectorId);
+                    setScheduledDate(session.scheduledDate);
+                    setLeadSetterId(session.leadSetterId);
+                    setTargetRouteCount(session.targetRouteCount);
+                    setNotes(session.notes || '');
+                    setGradeRows(
+                      Object.entries(session.targetGradeBreakdown || {}).length > 0
+                        ? Object.entries(session.targetGradeBreakdown || {}).map(
+                            ([grade, count]) => createGradeRow(grade, count)
+                          )
+                        : [createGradeRow('6A', 0)]
+                    );
+                    setIsModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+                >
+                  Edytuj
+                </button>
+              )}
 
-{canManageSessions && (
-<button
-  onClick={() => {
-    setEditingSession(session);
-    setTitle(session.title);
-    setSectorId(session.sectorId);
-    setScheduledDate(session.scheduledDate);
-    setLeadSetterId(session.leadSetterId);
-    setTargetRouteCount(session.targetRouteCount);
-    setNotes(session.notes || '');
-    setTargetGradeBreakdown(session.targetGradeBreakdown);
-    setIsModalOpen(true);
-  }}
-  className="px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
->
-  Edytuj
-</button>
-)}
+              {canManageSessions && (
+                <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs">
+                  {session.status === 'planned' && (
+                    <button
+                      onClick={() => onUpdateSessionStatus(session.id, 'in_progress')}
+                      className="w-full bg-[#ff4d00] hover:bg-[#e04400] text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
+                    >
+                      Zacznij nakręcanie
+                    </button>
+                  )}
 
-{canManageSessions && (
-<div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 text-xs">
-  {session.status === 'planned' && (
-    <button
-      onClick={() =>
-        onUpdateSessionStatus(session.id, 'in_progress')
-      }
-      className="w-full bg-[#ff4d00] hover:bg-[#e04400] text-white py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
-    >
-      Zacznij nakręcanie
-    </button>
-  )}
+                  {session.status === 'in_progress' && (
+                    <button
+                      onClick={() => onUpdateSessionStatus(session.id, 'completed')}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
+                    >
+                      <CheckCircle className="w-3 h-3" />
+                      <span>Zakończ Sesję</span>
+                    </button>
+                  )}
 
-  {session.status === 'in_progress' && (
-    <button
-      onClick={() =>
-        onUpdateSessionStatus(session.id, 'completed')
-      }
-      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-xs"
-    >
-      <CheckCircle className="w-3 h-3" />
-      <span>Zakończ Sesję</span>
-    </button>
-  )}
+                  {session.status === 'completed' && (
+                    <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
+                      ✓ Sesja zakończona
+                    </span>
+                  )}
+                </div>
+              )}
 
-  {session.status === 'completed' && (
-    <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
-      ✓ Sesja zakończona
-    </span>
-  )}
-</div>
-)}
- 
-
-                {session.status === 'completed' && (
-                  <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
-                    ✓ Reset Sektora Ukończony
-                  </span>
-                )}
-              </div>
-             
+              {session.status === 'completed' && (
+                <span className="w-full text-center text-xs text-emerald-800 font-mono font-bold bg-emerald-50 border border-emerald-200 py-1.5 rounded-lg">
+                  ✓ Reset Sektora Ukończony
+                </span>
+              )}
+            </div>
           );
         })}
       </div>
@@ -380,34 +410,82 @@ if (totalPlannedRoutes !== Number(targetRouteCount)) {
                   />
                 </div>
               </div>
+
               <div>
-  <label className="block text-zinc-700 font-semibold mb-2">
-    Planowany rozkład wycen
-  </label>
+                <label className="block text-zinc-700 font-semibold mb-2">
+                  Planowany rozkład wycen
+                </label>
 
-  <div className="grid grid-cols-4 gap-2">
-    {['6A', '6B', '6C', '7A'].map((grade) => (
-      <div key={grade}>
-        <label className="block text-xs text-zinc-500 mb-1">
-          {grade}
-        </label>
+                <div className="space-y-2">
+                  {gradeRows.map((row) => (
+                    <div
+                      key={row.id}
+                      className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end"
+                    >
+                      <div>
+                        <label className="block text-xs text-zinc-500 mb-1">Wycena</label>
+                        <input
+                          type="text"
+                          value={row.grade}
+                          onChange={(e) =>
+                            setGradeRows((prev) =>
+                              prev.map((item) =>
+                                item.id === row.id
+                                  ? { ...item, grade: e.target.value }
+                                  : item
+                              )
+                            )
+                          }
+                          placeholder="np. 6A+, 7B, 8A"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
+                        />
+                      </div>
 
-        <input
-          type="number"
-          min="0"
-          value={targetGradeBreakdown[grade] ?? 0}
-          onChange={(e) =>
-            setTargetGradeBreakdown((prev) => ({
-              ...prev,
-              [grade]: Number(e.target.value),
-            }))
-          }
-          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
-        />
-            </div>
-        ))}
-        </div>
-      </div>
+                      <div>
+                        <label className="block text-xs text-zinc-500 mb-1">Liczba dróg</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.count}
+                          onChange={(e) =>
+                            setGradeRows((prev) =>
+                              prev.map((item) =>
+                                item.id === row.id
+                                  ? { ...item, count: Number(e.target.value) }
+                                  : item
+                              )
+                            )
+                          }
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGradeRows((prev) =>
+                            prev.filter((item) => item.id !== row.id)
+                          )
+                        }
+                        className="px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-600 font-bold border border-zinc-200"
+                      >
+                        Usuń
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setGradeRows((prev) => [...prev, createGradeRow()])
+                    }
+                    className="w-full py-1.5 rounded-lg border border-dashed border-zinc-300 text-zinc-600 hover:bg-zinc-50 font-semibold"
+                  >
+                    + Dodaj wycenę
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-zinc-700 font-semibold mb-1">Wytyczne & Notatki</label>
                 <textarea

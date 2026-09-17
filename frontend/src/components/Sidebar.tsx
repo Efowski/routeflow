@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const operationsGroup = [
-    { id: 'planner', label: 'Planowanie Resetu', icon: Calendar, hotkey: '4' },
+    { id: 'planner', label: 'Planowanie settingu', icon: Calendar, hotkey: '4' },
 
     ...(isGymManager
       ? [
@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div>
             <div className="flex items-center space-x-1.5">
               <h1 className="font-bold text-sm text-zinc-950 tracking-tight leading-none">
-                Belay Route
+                RouteFlow
               </h1>
 
               <span className="px-1 py-0.2 rounded text-[9px] font-mono font-bold bg-[#ff4d00]/10 text-[#ff4d00] border border-[#ff4d00]/20">
@@ -241,13 +241,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Logged User & Gym Status Footer */}
-      <div className="p-3 mx-2.5 mb-3 rounded-xl bg-zinc-50 border border-zinc-200/80 text-xs text-zinc-600 space-y-2.5">
+      <div className="p-3 mx-2.5 mb-3 rounded-xl bg-zinc-50 border border-zinc-200/80 text-[13px] text-zinc-600 space-y-2.5">
         {currentUser && (
           <div className="pb-2 border-b border-zinc-200/70">
             <div className="flex items-center space-x-2 text-zinc-900 font-semibold mb-0.5">
               <Building2 className="w-3.5 h-3.5 text-[#ff4d00] shrink-0" />
 
-              <span className="truncate text-xs font-bold">
+              <span className="truncate text-[13px] font-bold">
                 {currentUser.gymName}
               </span>
             </div>

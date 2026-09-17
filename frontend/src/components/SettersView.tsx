@@ -162,7 +162,7 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
 
   <div className="min-w-0 flex-1">
     <div className="flex items-center justify-between">
-      <h3 className="text-sm font-bold text-zinc-950 truncate group-hover:text-[#ff4d00] transition">
+      <h3 className="text-base font-bold text-zinc-950 truncate group-hover:text-[#ff4d00] transition">
         {setter.name}
       </h3>
     </div>
@@ -171,7 +171,7 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
       {setter.role}
     </span>
 
-    <p className="text-[11px] text-zinc-400 mt-1 flex items-center space-x-1 truncate">
+    <p className="text-xs text-zinc-400 mt-1 flex items-center space-x-1 truncate">
       <Mail className="w-3 h-3 shrink-0 text-zinc-400" />
       <span className="truncate">{setter.email || '—'}</span>
     </p>
@@ -180,14 +180,14 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
 
               {/* Specialties */}
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                <span className="text-[11px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
                   Specjalizacje
                 </span>
                 <div className="flex flex-wrap gap-1">
                   {setter.specialties.map((spec, i) => (
                     <span
                       key={i}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-50 text-zinc-700 border border-zinc-200/70"
+                      className="px-2 py-0.5 rounded text-[11px] font-semibold bg-zinc-50 text-zinc-700 border border-zinc-200/70"
                     >
                       {spec}
                     </span>
@@ -198,7 +198,7 @@ export const SettersView: React.FC<SettersViewProps> = ({ setters, onSelectSette
               {/* Metrics */}
               <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-zinc-100 text-center text-xs">
                 <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/60">
-                  <span className="text-zinc-400 block text-[9px] font-mono uppercase">
+                  <span className="text-zinc-400 block text-[10px] font-mono uppercase">
                     Historia
                   </span>
                   <strong className="text-zinc-950 font-mono text-xs">

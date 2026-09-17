@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Mountain,
    
@@ -11,11 +11,14 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { RouteItem, Setter, SetterTask } from '../types';
+import { RouteItem, Sector, Setter, SetterTask } from '../types';
+ 
 import { UserAccount } from './AuthLanding';
+import { SectorModal } from './SectorModal';
 
 interface DashboardOverviewProps {
   routes: RouteItem[];
+  sectors: Sector[];
    
   setters: Setter[];
   sessions?: any[];
@@ -25,12 +28,19 @@ interface DashboardOverviewProps {
   onNewRouteClick: () => void;
   onOpenPlanningClick: () => void;
   onNavigateToTab: (tab: any) => void;
+  onAddSector: (newSectorData: {
+    name: string;
+    type: 'bouldering' | 'rope_wall' | 'training';
+    maxCapacity: number;
+    colorCode: string;
+  }) => Promise<void>;
   
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
    routes,
-   
+   sectors,
+   onAddSector,
    setters,
    sessions = [],
    tasks,
@@ -40,9 +50,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
    onNavigateToTab,
    
 }) => {
+  const [isSectorModalOpen, setIsSectorModalOpen] = useState(false);
+
   const canManageRoutes =
     currentUser?.role === 'Gym Manager' ||
     currentUser?.role === 'Head Setter';
+  const isGymManager = currentUser?.role === 'Gym Manager';
+  const isFreshGym = isGymManager && sectors.length === 0;
+  const needsFirstSetter =  isGymManager &&  sectors.length > 0 &&  setters.length === 0;
+  const needsFirstSession = isGymManager && sectors.length > 0 && sessions.length === 0 &&  setters.length > 0;
+  const needsFirstTask =   isGymManager &&  sessions.length > 0 &&  tasks.length === 0;
+
   const activeRoutes = routes.filter((r) => r.status === 'active');
   const now = new Date();
 
@@ -220,26 +238,82 @@ const sessionsMissingTasks = activeSessions
           >
             Harmonogram Resetów
           </button>
-          {canManageRoutes && (
-            <button
-              onClick={onNewRouteClick}
-              className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>Nowa Droga</span>
-            </button>
-          )}
+         
         </div>
       </div>
 
       
 
+      {(isFreshGym || needsFirstSetter || needsFirstSession || needsFirstTask) && (
+  <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-1">
+      <div className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#ff4d00]">
+        Pierwsze kroki
+      </div>
+
+        <h2 className="text-base font-bold text-zinc-950">
+        {isFreshGym
+      ? 'Zacznij pracę z RouteFlow'
+      : needsFirstSetter
+      ? 'Dodaj pierwszego settera'
+      : needsFirstSession
+        ? 'Zaplanuj pierwszą sesję'
+        : 'Utwórz pierwsze zadanie'}
+      </h2>
+
+      <p className="text-xs text-zinc-500 max-w-2xl">
+        {isFreshGym
+          ? 'Twój Gym jest gotowy. Utwórz pierwszy sektor, aby rozpocząć planowanie route settingu.'
+          : needsFirstSetter
+            ? 'Masz już sektor. Dodaj przynajmniej jedną osobę do zespołu setterskiego, aby móc zaplanować pierwszą sesję.'
+            : needsFirstSession
+            ? 'Masz już sektor i settera. Możesz teraz zaplanować pierwszą sesję nakręcania.'
+            : 'Pierwsza sesja jest już zaplanowana. Utwórz zadanie i przypisz je setterowi.'}
+      </p>
+    </div>
+
+    {isFreshGym ? (
+      <button
+        onClick={() => setIsSectorModalOpen(true)}
+        className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shrink-0"
+      >
+        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+        <span>Utwórz pierwszy sektor</span>
+      </button>
+    ) : needsFirstSetter ? (
+      <button
+        onClick={() => onNavigateToTab('setters')}
+        className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shrink-0"
+      >
+        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+        <span>Dodaj pierwszego settera</span>
+      </button>
+    ) : needsFirstSession ? (
+  <button
+    onClick={onOpenPlanningClick}
+    className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shrink-0"
+  >
+    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+    <span>Zaplanuj pierwszą sesję</span>
+  </button>
+) : (
+  <button
+    onClick={() => onNavigateToTab('tasks')}
+    className="px-3.5 py-1.5 bg-[#ff4d00] hover:bg-[#e04400] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center space-x-1.5 transition cursor-pointer shrink-0"
+  >
+    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+    <span>Utwórz pierwsze zadanie</span>
+  </button>
+    )}
+  </div>
+)}
+
       {/* 4 High-Density Tactical KPI Ribbons */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-2 gap-3">
         {/* Card 1: ACTIVE ROUTES */}
         <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-2xs flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">
+            <span className="text-[11px]font-mono font-bold uppercase tracking-wider">
               ACT-ROUTES
             </span>
             <Mountain className="w-3.5 h-3.5 text-zinc-400" />
@@ -248,7 +322,7 @@ const sessionsMissingTasks = activeSessions
             <div className="text-2xl font-bold font-mono text-zinc-950 tracking-tight">
               {activeRoutes.length}
             </div>
-            <div className="text-[11px] font-medium text-zinc-500 mt-0.5">
+            <div className="text-xsfont-medium text-zinc-500 mt-0.5">
               Łącznie dróg:{' '}
               <strong className="text-zinc-900 font-mono">
                 {routes.length}
@@ -257,50 +331,11 @@ const sessionsMissingTasks = activeSessions
           </div>
         </div>
 
-        {/* Card 2: ROTATION FRESHNESS */}
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-2xs flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">
-              FRESHNESS-IDX
-            </span>
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-mono text-zinc-950 tracking-tight flex items-baseline space-x-1.5">
-              <span>{freshnessPercent}%</span>
-              <span className="text-[10px] font-sans font-normal text-zinc-400">norma 45d</span>
-            </div>
-            <div className="w-full bg-zinc-100 h-1 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full"
-                style={{ width: `${freshnessPercent}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: TOTAL SENDS */}
-        <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-2xs flex flex-col justify-between space-y-2">
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">
-              TOTAL-SENDS
-            </span>
-            <TrendingUp className="w-3.5 h-3.5 text-[#ff4d00]" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-mono text-zinc-950 tracking-tight">
-              {totalAscents.toLocaleString()}
-            </div>
-            <div className="text-[11px] font-medium text-zinc-500 mt-0.5">
-              Łączna liczba przejść (QR + App)
-            </div>
-          </div>
-        </div>
-
+        
         {/* Card 4: SETTERS WORKLOAD */}
         <div className="bg-white p-3.5 rounded-xl border border-zinc-200/80 shadow-2xs flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider">
+            <span className="text-[11px]font-mono font-bold uppercase tracking-wider">
               ACTIVE-SETTERS
             </span>
             <Users className="w-3.5 h-3.5 text-zinc-400" />
@@ -309,12 +344,7 @@ const sessionsMissingTasks = activeSessions
             <div className="text-2xl font-bold font-mono text-zinc-950 tracking-tight">
               {setters.length}
             </div>
-            <div className="text-[11px] font-medium text-zinc-500 mt-0.5">
-              Aktywne sesje:{' '}
-              <strong className="text-zinc-900 font-mono">
-                {activeSessions.length}
-              </strong>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -329,7 +359,7 @@ const sessionsMissingTasks = activeSessions
             </h2>
           </div>
 
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-zinc-100 text-zinc-700 border border-zinc-200">
             {activeSessions.length} aktywnych
           </span>
         </div>
@@ -346,17 +376,17 @@ const sessionsMissingTasks = activeSessions
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-bold text-zinc-950">
+                      <h3 className="text-base font-bold text-zinc-950">
                         {session.title}
                       </h3>
 
-                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                      <p className="text-xs text-zinc-500 mt-0.5">
                         {session.sectorName}
                       </p>
                     </div>
 
                     <span
-                      className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
+                      className={`px-2 py-0.5 rounded text-xsfont-mono font-bold uppercase ${
                         session.status === 'in_progress'
                           ? 'bg-amber-100 text-amber-800 border border-amber-200'
                           : 'bg-zinc-100 text-zinc-700 border border-zinc-200'
@@ -368,7 +398,7 @@ const sessionsMissingTasks = activeSessions
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 text-[11px]">
+                  <div className="space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-zinc-400 font-mono uppercase text-[9px]">
                         Lead Setter
@@ -410,13 +440,13 @@ const sessionsMissingTasks = activeSessions
 </div>
 
     <div className="pt-2 mt-2 border-t border-zinc-200">
-      <div className="text-[9px] uppercase font-mono text-zinc-400 mb-1.5">
+      <div className="text-xsuppercase font-mono text-zinc-400 mb-1.5">
         Task Progress
       </div>
 
       <div className="grid grid-cols-4 gap-1.5">
         <div className="bg-white border border-zinc-200 rounded-md px-2 py-1.5 text-center">
-          <div className="text-[9px] font-mono text-zinc-400 uppercase">
+          <div className="text-xsfont-mono text-zinc-400 uppercase">
             Todo
           </div>
           <div className="text-xs font-mono font-bold text-zinc-900">
@@ -425,7 +455,7 @@ const sessionsMissingTasks = activeSessions
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5 text-center">
-          <div className="text-[9px] font-mono text-amber-600 uppercase">
+          <div className="text-xsfont-mono text-amber-600 uppercase">
             W toku
           </div>
           <div className="text-xs font-mono font-bold text-amber-800">
@@ -434,7 +464,7 @@ const sessionsMissingTasks = activeSessions
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-md px-2 py-1.5 text-center">
-          <div className="text-[9px] font-mono text-blue-600 uppercase">
+          <div className="text-xsfont-mono text-blue-600 uppercase">
             Testy
           </div>
           <div className="text-xs font-mono font-bold text-blue-800">
@@ -443,7 +473,7 @@ const sessionsMissingTasks = activeSessions
         </div>
 
         <div className="bg-emerald-50 border border-emerald-200 rounded-md px-2 py-1.5 text-center">
-          <div className="text-[9px] font-mono text-emerald-600 uppercase">
+          <div className="text-xsfont-mono text-emerald-600 uppercase">
             Gotowe
           </div>
           <div className="text-xs font-mono font-bold text-emerald-800">
@@ -456,11 +486,11 @@ const sessionsMissingTasks = activeSessions
 
       <div className="pt-2 mt-2 border-t border-zinc-200">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[9px] uppercase font-mono text-zinc-400">
+        <span className="text-xsuppercase font-mono text-zinc-400">
           Completion
         </span>
 
-        <strong className="text-[10px] font-mono text-zinc-900">
+        <strong className="text-xs font-mono text-zinc-900">
           {stats.completionPercent}%
         </strong>
       </div>
@@ -474,7 +504,7 @@ const sessionsMissingTasks = activeSessions
         />
       </div>
 
-      <div className="text-[9px] font-mono text-zinc-400 mt-1">
+      <div className="text-xsfont-mono text-zinc-400 mt-1">
         {stats.publishedTasks} / {session.targetRouteCount} tras opublikowanych
       </div>
     </div>                      
@@ -486,7 +516,7 @@ const sessionsMissingTasks = activeSessions
 
                   <button
                     onClick={() => onNavigateToTab('planner')}
-                    className="w-full py-1.5 px-2.5 bg-white hover:bg-zinc-100 text-zinc-800 text-[11px] font-semibold rounded-lg border border-zinc-200 transition cursor-pointer flex items-center justify-center space-x-1"
+                    className="w-full py-1.5 px-2.5 bg-white hover:bg-zinc-100 text-zinc-800 text-xs font-semibold rounded-lg border border-zinc-200 transition cursor-pointer flex items-center justify-center space-x-1"
                   >
                     <span>Otwórz sesję</span>
                     <ChevronRight className="w-3 h-3" />
@@ -758,6 +788,11 @@ const sessionsMissingTasks = activeSessions
     <ChevronRight className="w-3 h-3" />
   </button>
 </div>
-</div>
+      <SectorModal
+        isOpen={isSectorModalOpen}
+        onClose={() => setIsSectorModalOpen(false)}
+        onAddSector={onAddSector}
+      />
+    </div>
   );
 };
