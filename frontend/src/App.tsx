@@ -11,6 +11,7 @@ import {
   apiFetchSectors,
   apiCreateSector,
   apiFetchSetters,
+  apiDeleteSector,
   apiCreateSetter,
   apiFetchSessions,
   apiCreateSession,
@@ -447,6 +448,22 @@ const handleAddSector = async (newSectorData: {
   }
 };
 
+const handleDeleteSector = async (sectorId: string) => {
+  try {
+    const deleted = await apiDeleteSector(sectorId);
+
+    if (!deleted) {
+      throw new Error('Nie udało się usunąć sektora.');
+    }
+
+    setSectors((prev) => prev.filter((sector) => sector.id !== sectorId));
+  } catch (error) {
+    console.error('Delete sector error:', error);
+    alert('Nie udało się usunąć sektora.');
+  }
+};
+
+
   const handleAddSetter = async (newSetterData: {
   userId: string;
   name: string;
@@ -578,6 +595,8 @@ const handleAddSector = async (newSectorData: {
               onAddSession={handleAddSession}
               onUpdateSessionStatus={handleUpdateSessionStatus}
               onUpdateSession={handleUpdateSession}
+              onAddSector={handleAddSector}
+              onDeleteSector={handleDeleteSector}
             />
           )}
 
