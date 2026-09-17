@@ -10,7 +10,7 @@ import {
   User,
   Trash2,
   Info,
-  Plus,
+   
   AlertCircle,
   Mountain,
   LayoutGrid,
@@ -27,12 +27,7 @@ interface RouteDatabaseProps {
   currentUser: UserAccount | null;
   onSelectRouteForQR: (route: RouteItem) => void;
   onRetireRoute: (routeId: string) => void;
-  onAddRoute: (
-    newRoute: Omit<
-      RouteItem,
-      'id' | 'ageDays' | 'qrCodeUrl' | 'ratingAverage' | 'ratingCount' | 'ascentCount'
-    >
-  ) => void;
+  
   onUpdateRoute: (
   routeId: string,
   updatedRoute: Partial<RouteItem>
@@ -46,7 +41,7 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
   currentUser,
   onSelectRouteForQR,
   onRetireRoute,
-  onAddRoute,
+   
   onUpdateRoute,
 }) => {
   const canManageRoutes =
@@ -65,7 +60,7 @@ export const RouteDatabase: React.FC<RouteDatabaseProps> = ({
 
   const [selectedRouteDetail, setSelectedRouteDetail] = useState<RouteItem | null>(null);
   const [isEditingRoute, setIsEditingRoute] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
 
   // Edit Route Form State
 const [editName, setEditName] = useState('');
@@ -77,16 +72,7 @@ const [editHoldColor, setEditHoldColor] = useState<HoldColor>('blue');
 const [editSetterId, setEditSetterId] = useState('');
 const [editDescription, setEditDescription] = useState('');
 
-  // New Route Form State
-  const [name, setName] = useState('');
-  const [type, setType] = useState<RouteType>('boulder');
-  const [grade, setGrade] = useState('6A');
-  const [vGrade, setVGrade] = useState('V3');
-  const [sectorId, setSectorId] = useState(sectors[0]?.id || '');
-  const [holdColor, setHoldColor] = useState<HoldColor>('blue');
-  const [setterId, setSetterId] = useState(setters[0]?.id || '');
-  const [description, setDescription] = useState('');
-  const [tagsInput, setTagsInput] = useState('Dyno, Tech');
+  
 
   const colorHexMap: Record<HoldColor, string> = {
     red: '#ef4444',
@@ -130,37 +116,7 @@ const [editDescription, setEditDescription] = useState('');
     });
   }, [routes, searchTerm, selectedType, selectedSector, selectedSetter, selectedColor, statusFilter]);
 
-  const handleSubmitNewRoute = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !sectorId || !setterId) return;
-
-    const sectorObj = sectors.find((s) => s.id === sectorId);
-    const setterObj = setters.find((s) => s.id === setterId);
-
-    onAddRoute({
-      name,
-      type,
-      grade,
-      vGrade: type === 'boulder' ? vGrade : undefined,
-      sectorId,
-      sectorName: sectorObj ? sectorObj.name : 'Sector',
-      holdColor,
-      holdColorHex: colorHexMap[holdColor] || '#3b82f6',
-      setterId,
-      setterName: setterObj ? setterObj.name : 'Setter',
-      dateSet: new Date().toISOString().split('T')[0],
-      status: 'active',
-      description,
-      tags: tagsInput
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    });
-
-    setIsAddModalOpen(false);
-    setName('');
-    setDescription('');
-  };
+  
 
   const handleStartEditRoute = () => {
   if (!selectedRouteDetail) return;
@@ -211,7 +167,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
         <div>
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-[#ff4d00]"></span>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-400">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-zinc-400">
               INVENTORY CATALOG
             </span>
           </div>
@@ -250,15 +206,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
             </button>
           </div>
 
-          {canManageRoutes && (
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-[#ff4d00] hover:bg-[#e04400] text-white px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 shadow-xs transition cursor-pointer shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>Nowa Droga</span>
-            </button>
-          )}
+          
         </div>
       </div>
 
@@ -327,7 +275,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
         {/* Sub-filters row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-zinc-100 text-xs">
           <div>
-            <label className="block text-zinc-400 text-[10px] font-mono uppercase mb-1">
+            <label className="block text-zinc-400 text-[11px] font-mono uppercase mb-1">
               Sektor Ściany
             </label>
             <select
@@ -345,7 +293,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
           </div>
 
           <div>
-            <label className="block text-zinc-400 text-[10px] font-mono uppercase mb-1">
+            <label className="block text-zinc-400 text-[11px] font-mono uppercase mb-1">
               Autor (Routesetter)
             </label>
             <select
@@ -363,7 +311,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
           </div>
 
           <div>
-            <label className="block text-zinc-400 text-[10px] font-mono uppercase mb-1">
+            <label className="block text-zinc-400 text-[11px] font-mono uppercase mb-1">
               Kolor Chwytów
             </label>
             <select
@@ -414,18 +362,18 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                         style={{ backgroundColor: route.holdColorHex }}
                         title={`Kolor chwytów: ${route.holdColor}`}
                       />
-                      <span className="text-[10px] font-mono uppercase font-bold px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-700">
+                      <span className="text-[11px] font-mono uppercase font-bold px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-700">
                         {route.type === 'boulder' ? 'BOULDER' : 'ROPE'}
                       </span>
                       {route.wallLineNumber && (
-                        <span className="text-[10px] font-mono text-zinc-400">
+                        <span className="text-[11px] font-mono text-zinc-400">
                           #{route.wallLineNumber}
                         </span>
                       )}
                     </div>
 
                     <div
-                      className={`text-[10px] font-mono font-bold px-2 py-0.2 rounded ${
+                      className={`text-[11px] font-mono font-bold px-2 py-0.2 rounded ${
                         isVeryOld
                           ? 'bg-rose-100 text-rose-800 border border-rose-200'
                           : isOld
@@ -440,16 +388,16 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                   {/* Route Title & Grade */}
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-bold text-zinc-950 group-hover:text-[#ff4d00] transition">
+                      <h3 className="text-base font-bold text-zinc-950 group-hover:text-[#ff4d00] transition">
                         {route.name}
                       </h3>
-                      <p className="text-[11px] text-zinc-500 font-medium line-clamp-1 mt-0.5">
+                      <p className="text-xs text-zinc-500 font-medium line-clamp-1 mt-0.5">
                         {route.sectorName}
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end">
-                      <span className="text-xs font-black font-mono tracking-tight text-zinc-950 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
+                      <span className="text-sm font-black font-mono tracking-tight text-zinc-950 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
                         {route.grade}
                       </span>
                       {route.vGrade && (
@@ -466,7 +414,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                       <User className="w-3 h-3 text-zinc-400" />
                       <span className="truncate max-w-[120px]">{route.setterName}</span>
                     </div>
-                    <div className="flex items-center space-x-1 font-mono text-[10px]">
+                    <div className="flex items-center space-x-1 font-mono text-[11px]">
                       <Calendar className="w-3 h-3 text-zinc-400" />
                       <span>{route.dateSet}</span>
                     </div>
@@ -474,12 +422,12 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
 
                   {/* Ratings & Ascents */}
                   <div className="mt-2 flex items-center justify-between text-[11px] font-medium bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-100">
-                    <div className="flex items-center space-x-1 text-amber-600 font-mono text-[10px]">
+                    <div className="flex items-center space-x-1 text-amber-600 font-mono text-[11px]">
                       <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
                       <span>{route.ratingAverage}</span>
                       <span className="text-zinc-400">({route.ratingCount})</span>
                     </div>
-                    <div className="text-zinc-600 font-mono text-[10px]">
+                    <div className="text-zinc-600 font-mono text-[11px]">
                       <strong className="text-zinc-900">{route.ascentCount}</strong> przejść
                     </div>
                   </div>
@@ -522,7 +470,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
         <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 border-b border-zinc-200/80 text-[10px] font-mono uppercase text-zinc-500 font-bold">
+              <thead className="bg-zinc-50 border-b border-zinc-200/80 text-[11px] font-mono uppercase text-zinc-500 font-bold">
                 <tr>
                   <th className="py-2.5 px-3">Kolor & Typ</th>
                   <th className="py-2.5 px-3">Nazwa Drogi</th>
@@ -543,7 +491,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                           className="w-2.5 h-2.5 rounded-full border border-zinc-300"
                           style={{ backgroundColor: route.holdColorHex }}
                         />
-                        <span className="font-mono text-[10px] text-zinc-600 uppercase">
+                        <span className="font-mono text-[11px] text-zinc-600 uppercase">
                           {route.type === 'boulder' ? 'B' : 'R'}
                         </span>
                       </div>
@@ -556,7 +504,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
                     </td>
                     <td className="py-2.5 px-3 text-zinc-600">{route.sectorName}</td>
                     <td className="py-2.5 px-3 text-zinc-600">{route.setterName}</td>
-                    <td className="py-2.5 px-3 font-mono text-[10px]">
+                    <td className="py-2.5 px-3 font-mono text-[11px]">
                       <span className={route.ageDays >= 45 ? 'text-rose-600 font-bold' : 'text-zinc-600'}>
                         {route.ageDays}d
                       </span>
@@ -780,7 +728,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
 
     <div className="grid grid-cols-4 gap-2 text-center text-xs">
       <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+        <span className="text-[11px] text-zinc-400 font-mono block uppercase">
           Setter
         </span>
         <strong className="text-zinc-900 block truncate text-[11px]">
@@ -789,7 +737,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
       </div>
 
       <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+        <span className="text-[11px] text-zinc-400 font-mono block uppercase">
           Data
         </span>
         <strong className="text-zinc-900 block text-[11px] font-mono">
@@ -798,7 +746,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
       </div>
 
       <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+        <span className="text-[11px] text-zinc-400 font-mono block uppercase">
           Wiek
         </span>
         <strong className="text-[#ff4d00] block text-[11px] font-mono">
@@ -807,7 +755,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
       </div>
 
       <div className="bg-zinc-50 p-2 rounded-lg border border-zinc-200/70">
-        <span className="text-[10px] text-zinc-400 font-mono block uppercase">
+        <span className="text-[11px] text-zinc-400 font-mono block uppercase">
           Sends
         </span>
         <strong className="text-emerald-700 block text-[11px] font-mono">
@@ -827,7 +775,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
 
     <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/70 flex items-center justify-between text-xs">
       <div>
-        <span className="text-[10px] text-zinc-400 font-mono uppercase block">
+        <span className="text-[11px] text-zinc-400 font-mono uppercase block">
           Wycena Oficjalna:
         </span>
         <strong className="text-zinc-950 font-mono">
@@ -836,7 +784,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
       </div>
 
       <div className="text-right">
-        <span className="text-[10px] text-zinc-400 font-mono uppercase block">
+        <span className="text-[11px] text-zinc-400 font-mono uppercase block">
           Konsensus Wspinaczy:
         </span>
         <strong className="text-[#ff4d00] font-mono">
@@ -873,154 +821,7 @@ const handleSubmitEditRoute = async (e: React.FormEvent) => {
   </div>
 )}
 
-      {/* Modal: Add New Route */}
-      {isAddModalOpen && canManageRoutes && (
-        <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-xl max-w-md w-full p-5 shadow-2xl relative space-y-3.5 text-zinc-800">
-            <button
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute top-3.5 right-3.5 text-zinc-400 hover:text-zinc-800 font-bold p-1"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-base font-bold text-zinc-950 flex items-center space-x-2">
-              <Plus className="w-4 h-4 text-[#ff4d00]" />
-              <span>Dodaj Nową Drogę do Bazy</span>
-            </h3>
-
-            <form onSubmit={handleSubmitNewRoute} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Nazwa Drogi / Boulderu *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="np. Crimson Overhang, Project 7A"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Typ</label>
-                  <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as RouteType)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                  >
-                    <option value="boulder">🧩 Boulder</option>
-                    <option value="rope">🧗 Lina / Obiekt</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Wycena (Francuska)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="np. 6A, 6C+, 7A+"
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono font-bold focus:outline-none focus:border-[#ff4d00]"
-                  />
-                </div>
-              </div>
-
-              {type === 'boulder' && (
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Wycena V-Scale (Opcjonalnie)</label>
-                  <input
-                    type="text"
-                    placeholder="np. V3, V5, V8"
-                    value={vGrade}
-                    onChange={(e) => setVGrade(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 font-mono focus:outline-none focus:border-[#ff4d00]"
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Sektor *</label>
-                  <select
-                    value={sectorId}
-                    onChange={(e) => setSectorId(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                  >
-                    {sectors.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-700 font-semibold mb-1">Kolor Chwytów</label>
-                  <select
-                    value={holdColor}
-                    onChange={(e) => setHoldColor(e.target.value as HoldColor)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                  >
-                    <option value="blue">Niebieski</option>
-                    <option value="red">Czerwony</option>
-                    <option value="black">Czarny</option>
-                    <option value="yellow">Żółty</option>
-                    <option value="green">Zielony</option>
-                    <option value="purple">Fioletowy</option>
-                    <option value="pink">Różowy</option>
-                    <option value="white">Biały</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Routesetter *</label>
-                <select
-                  value={setterId}
-                  onChange={(e) => setSetterId(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                >
-                  {setters.map((set) => (
-                    <option key={set.id} value={set.id}>
-                      {set.name} ({set.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-zinc-700 font-semibold mb-1">Opis / Wskazówki</label>
-                <textarea
-                  rows={2}
-                  placeholder="np. Dynamiczny wyskok z podhaczeniem pięty..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-900 focus:outline-none focus:border-[#ff4d00]"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-700 font-semibold hover:bg-zinc-200 transition"
-                >
-                  Anuluj
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#ff4d00] hover:bg-[#e04400] text-white font-bold transition shadow-xs"
-                >
-                  Zapisz drogę
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+       
     </div>
   );
 };

@@ -444,6 +444,7 @@ const handleAddSector = async (newSectorData: {
   } catch (error) {
     console.error('Create sector error:', error);
     alert('Nie udało się utworzyć sektora.');
+    throw error;
   }
 };
 
@@ -548,6 +549,7 @@ const handleDeleteSector = async (sectorId: string) => {
           {activeTab === 'dashboard' && (
             <DashboardOverview
               routes={routes}
+              sectors={sectors}
               currentUser={currentUser} 
               setters={setters}
               sessions={sessions}
@@ -556,6 +558,7 @@ const handleDeleteSector = async (sectorId: string) => {
               onNewRouteClick={() => setActiveTab('routes')}
               onOpenPlanningClick={() => setActiveTab('planner')}
               onNavigateToTab={(tab) => setActiveTab(tab)}
+              onAddSector={handleAddSector}
               
             />
           )}

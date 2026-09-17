@@ -97,15 +97,15 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
               <div className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-2xs space-y-3 hover:border-zinc-300 transition">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 pb-2.5">
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-950">{log.sectorName}</h3>
-                    <div className="flex items-center space-x-2 text-[11px] text-zinc-500 mt-0.5">
+                    <h3 className="text-base font-bold text-zinc-950">{log.sectorName}</h3>
+                    <div className="flex items-center space-x-2 text-xs text-zinc-500 mt-0.5">
                       <User className="w-3 h-3 text-zinc-400" />
                       <span>Head Setter: <strong className="text-zinc-800 font-semibold">{log.leadSetterName}</strong></span>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <span className="text-[11px] font-mono text-zinc-700 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 flex items-center space-x-1.5">
+                    <span className="text-xs font-mono text-zinc-700 bg-zinc-50 px-2.5 py-1 rounded-lg border border-zinc-200 flex items-center space-x-1.5">
                       <Calendar className="w-3 h-3 text-[#ff4d00]" />
                       <span>{log.date}</span>
                     </span>
@@ -119,7 +119,7 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
                       <Trash2 className="w-3 h-3" />
                     </div>
                     <div>
-                      <span className="text-zinc-400 text-[10px] font-mono uppercase block">Zdjęte</span>
+                      <span className="text-zinc-400 text-[11px] font-mono uppercase block">Zdjęte</span>
                       <strong className="text-rose-700 text-xs font-mono">{log.routesStripped} dróg</strong>
                     </div>
                   </div>
@@ -129,7 +129,7 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
                       <Sparkles className="w-3 h-3" />
                     </div>
                     <div>
-                      <span className="text-zinc-400 text-[10px] font-mono uppercase block">Nakręcone</span>
+                      <span className="text-zinc-400 text-[11px] font-mono uppercase block">Nakręcone</span>
                       <strong className="text-emerald-800 text-xs font-mono">{log.routesSet} dróg</strong>
                     </div>
                   </div>
@@ -139,7 +139,7 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
                       <CheckCircle2 className="w-3 h-3 text-[#ff4d00]" />
                     </div>
                     <div>
-                      <span className="text-zinc-400 text-[10px] font-mono uppercase block">Bilans Netto</span>
+                      <span className="text-zinc-400 text-[11px] font-mono uppercase block">Bilans Netto</span>
                       <strong className="text-zinc-950 text-xs font-mono">
                         {net >= 0 ? `+${net}` : net} dróg
                       </strong>
@@ -148,7 +148,7 @@ export const ResetHistory: React.FC<ResetHistoryProps> = ({
                 </div>
 
                 {log.notes && (
-                  <p className="text-[11px] text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
+                  <p className="text-xs text-zinc-600 italic bg-zinc-50/70 p-2 rounded-lg border border-zinc-100">
                     "{log.notes}"
                   </p>
                 )}
