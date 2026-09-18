@@ -499,7 +499,7 @@ onLoginSuccess(createdUser);
             {/* Security Callout */}
             <div className="mt-3.5 p-2 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center space-x-1.5 text-[10px] font-mono text-zinc-500">
               <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-              <span>TLS ENCRYPTED & DJANGO REST API AUTH</span>
+              <span>DJANGO REST API AUTH</span>
             </div>
 
           </div>
