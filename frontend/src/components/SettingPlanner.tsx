@@ -37,7 +37,7 @@ const createGradeRow = (
   grade: string = '',
   count: number = 0
 ): GradeRow => ({
-  id: crypto.randomUUID(),
+  id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
   grade,
   count,
 });

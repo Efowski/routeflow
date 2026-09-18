@@ -19,7 +19,7 @@ import {
   Tag,
 } from 'lucide-react';
 
-import { apiLogin } from '../services/apiService';
+import { apiLogin, API_BASE_URL } from '../services/apiService';
 
 export interface UserAccount {
   id: string;
@@ -80,7 +80,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({ onLoginSuccess }) => {
     if (isRegisterMode) {
       // Attempt registration request to Django backend REST API
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/accounts/register/', {
+        const response = await fetch(`${API_BASE_URL}/accounts/register/`,  {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
